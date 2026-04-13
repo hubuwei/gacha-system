@@ -61,3 +61,9 @@ backup_*.sql
 
 ### Deploy Packages ###
 deploy-packages/*.jar
+
+### Docker ###
+.env
+!.env.docker
+!.env.example
+!.env.prod.example

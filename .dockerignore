@@ -1,0 +1,50 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Node
+node_modules/
+dist/
+game-mall/node_modules
+game-mall/dist
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+!.env.docker
+
+# Docker
+docker-compose.yml
+Dockerfile
+*.sh
+*.bat
+*.ps1
+
+# Documentation
+*.md
+docs/
+
+# Backup
+*.bak
+*.sql.bak
+backup_*.sql
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+test-report.html
+*-test.html
