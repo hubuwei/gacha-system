@@ -7,12 +7,14 @@ FROM maven:3.8-openjdk-11 AS builder
 
 WORKDIR /app
 
-# 复制pom.xml并下载依赖（利用Docker缓存）
+# 复制根目录pom.xml（父项目）和各模块pom.xml
 COPY pom.xml .
 COPY common/pom.xml common/
 COPY mall-service/pom.xml mall-service/
 
-RUN cd common && mvn dependency:go-offline -B && \
+# 先安装父pom，再构建并安装common模块，最后处理mall-service
+RUN mvn install -N -B && \
+    cd common && mvn clean install -DskipTests -B && \
     cd ../mall-service && mvn dependency:go-offline -B
 
 # 复制源代码并编译
@@ -23,12 +25,12 @@ RUN cd common && mvn clean install -DskipTests && \
     cd ../mall-service && mvn clean package -DskipTests
 
 # 阶段2: 运行
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:11-jre-alpine
 
 WORKDIR /app
 
-# 创建非root用户
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# 创建非root用户（Alpine兼容）
+RUN addgroup -S appuser && adduser -S appuser -G appuser
 
 # 从构建阶段复制JAR包
 COPY --from=builder /app/mall-service/target/*.jar app.jar

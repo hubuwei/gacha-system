@@ -10,7 +10,9 @@ COPY pom.xml .
 COPY common/pom.xml common/
 COPY game-service/pom.xml game-service/
 
-RUN cd common && mvn dependency:go-offline -B && \
+# 先安装父pom，再构建并安装common模块，最后处理game-service
+RUN mvn install -N -B && \
+    cd common && mvn clean install -DskipTests -B && \
     cd ../game-service && mvn dependency:go-offline -B
 
 COPY common/src common/src
@@ -19,11 +21,11 @@ COPY game-service/src game-service/src
 RUN cd common && mvn clean install -DskipTests && \
     cd ../game-service && mvn clean package -DskipTests
 
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:11-jre-alpine
 
 WORKDIR /app
 
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN addgroup -S appuser && adduser -S appuser -G appuser
 
 COPY --from=builder /app/game-service/target/*.jar app.jar
 

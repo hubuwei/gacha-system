@@ -17,7 +17,7 @@ services:
       MYSQL_DATABASE: ${DB_NAME:-gacha_system_prod}
       TZ: Asia/Shanghai
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql

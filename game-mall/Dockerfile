@@ -3,13 +3,13 @@
 # ============================================
 
 # 阶段1: 构建
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 # 复制package.json并安装依赖
 COPY game-mall/package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
 # 复制源代码并构建
 COPY game-mall/ .

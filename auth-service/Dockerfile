@@ -11,7 +11,9 @@ COPY pom.xml .
 COPY common/pom.xml common/
 COPY auth-service/pom.xml auth-service/
 
-RUN cd common && mvn dependency:go-offline -B && \
+# 先安装父pom，再构建并安装common模块，最后处理auth-service
+RUN mvn install -N -B && \
+    cd common && mvn clean install -DskipTests -B && \
     cd ../auth-service && mvn dependency:go-offline -B
 
 COPY common/src common/src
@@ -21,11 +23,11 @@ RUN cd common && mvn clean install -DskipTests && \
     cd ../auth-service && mvn clean package -DskipTests
 
 # 阶段2: 运行
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:11-jre-alpine
 
 WORKDIR /app
 
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN addgroup -S appuser && adduser -S appuser -G appuser
 
 COPY --from=builder /app/auth-service/target/*.jar app.jar
 
