@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: ${APP_NAME:game-service}
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:gacha_system_dev}?useSSL=${DB_USE_SSL:false}&serverTimezone=${DB_TIMEZONE:UTC}&characterEncoding=${DB_ENCODING:utf-8}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:true}
+    properties:
+      hibernate:
+        dialect: ${JPA_DIALECT:org.hibernate.dialect.MySQL5InnoDBDialect}
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    database: ${REDIS_DATABASE:0}
+    timeout: ${REDIS_TIMEOUT:5000ms}
+    # Redis 不可用时的降级策略
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+    # 如果 Redis 连接失败，尝试使用本地模式（可选）
+    # 注意：生产环境必须使用 Redis
+
+server:
+  port: 8082
+
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.cheng.game: ${LOG_LEVEL_GAME:DEBUG}
+    com.cheng.common: ${LOG_LEVEL_COMMON:DEBUG}
+    org.springframework.web: ${LOG_LEVEL_SPRING_WEB:DEBUG}
+    org.springframework.web.cors: ${LOG_LEVEL_CORS:DEBUG}
+    org.hibernate.SQL: ${LOG_LEVEL_HIBERNATE_SQL:DEBUG}
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

@@ -1,0 +1,87 @@
+-- 创建数据库（可选）
+CREATE DATABASE IF NOT EXISTS gacha_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE gacha_system;
+
+-- 用户表
+CREATE TABLE users (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '用户ID',
+    username VARCHAR(50) NOT NULL UNIQUE COMMENT '用户名',
+    password VARCHAR(100) NOT NULL COMMENT 'BCrypt加密密码',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
+    PRIMARY KEY (id),
+    INDEX idx_username (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 大区表
+CREATE TABLE regions (
+    id INT NOT NULL AUTO_INCREMENT COMMENT '大区ID',
+    name VARCHAR(50) NOT NULL COMMENT '大区名称，如"华东一区"',
+    server_id VARCHAR(20) COMMENT '服务器标识（可选）',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 用户-大区绑定表（一个用户可绑定多个大区，但通常活跃一个）
+CREATE TABLE user_region (
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    region_id INT NOT NULL COMMENT '大区ID',
+    selected BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否为当前选中大区',
+    bound_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '绑定时间',
+    PRIMARY KEY (user_id, region_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (region_id) REFERENCES regions(id) ON DELETE CASCADE,
+    INDEX idx_user_selected (user_id, selected)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 钱包表（虚拟币 + 积分）
+CREATE TABLE wallets (
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    balance DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT '虚拟货币余额（用于抽奖）',
+    points INT NOT NULL DEFAULT 0 COMMENT '积分（可用于兑换等）',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 抽奖配置表（支持动态调整概率）
+CREATE TABLE gacha_config (
+    id INT NOT NULL AUTO_INCREMENT COMMENT '配置ID',
+    item_name VARCHAR(50) NOT NULL COMMENT '道具名称',
+    rarity ENUM('N','R','SR','SSR') NOT NULL COMMENT '稀有度',
+    base_prob DECIMAL(5,4) NOT NULL CHECK (base_prob BETWEEN 0 AND 1) COMMENT '基础概率（如0.01=1%）',
+    pity_threshold INT DEFAULT NULL COMMENT '保底抽数（如SSR为90）',
+    is_pity_guaranteed BOOLEAN NOT NULL DEFAULT TRUE COMMENT '是否保底必出',
+    PRIMARY KEY (id),
+    INDEX idx_rarity (rarity)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 抽奖记录表
+CREATE TABLE gacha_records (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '记录ID',
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    region_id INT NOT NULL COMMENT '大区ID',
+    item_id INT NOT NULL COMMENT '抽中道具ID（关联gacha_config.id）',
+    is_pity BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否触发保底',
+    cost DECIMAL(10,2) NOT NULL DEFAULT 10.00 COMMENT '本次消耗金额',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '抽奖时间',
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (region_id) REFERENCES regions(id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES gacha_config(id) ON DELETE RESTRICT,
+    INDEX idx_user_region_time (user_id, region_id, created_at),
+    INDEX idx_user_item (user_id, item_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 插入示例大区数据
+INSERT INTO regions (name, server_id) VALUES
+('华东一区', 'CN-EAST-1'),
+('华北二区', 'CN-NORTH-2'),
+('北美服', 'US-WEST'),
+('欧洲服', 'EU-CENTRAL');
+
+-- 插入示例抽奖配置（模拟常见卡池）
+INSERT INTO gacha_config (item_name, rarity, base_prob, pity_threshold) VALUES
+('普通角色A', 'N', 0.7000, NULL),
+('稀有武器B', 'R', 0.2000, NULL),
+('史诗坐骑C', 'SR', 0.0900, 10),
+('传说英雄D', 'SSR', 0.0100, 90);

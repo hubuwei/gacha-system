@@ -1,0 +1,41 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    url: jdbc:mysql://localhost:3306/gacha_system_prod?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: mall_user
+    password: Xc037417!
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  redis:
+    host: localhost
+    port: 6379
+    password: Xc037417!
+    database: 0
+    timeout: 5000ms
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: Xc037417!
+    virtual-host: /
+  elasticsearch:
+    uris: http://localhost:9200
+    connection-timeout: 5s
+    read-timeout: 30s
+
+# Server 配置 - 支持反向代理
+server:
+  forward-headers-strategy: native
+  tomcat:
+    remote-ip-header: x-forwarded-for
+    protocol-header: x-forwarded-proto
+
+logging:
+  level:
+    root: WARN
+    com.cheng: INFO
+  file:
+    name: /opt/gacha-system/logs/service.log

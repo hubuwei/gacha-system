@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信支付 Native 下单测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .qrcode-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        #qrcode {
+            display: inline-block;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .order-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #666;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .tip {
+            margin-top: 15px;
+            padding: 12px;
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #0c5460;
+        }
+
+        .log {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1e1e1e;
+            color: #00ff00;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .log-time {
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💳 微信支付 Native 下单测试</h1>
+
+        <form id="orderForm">
+            <div class="form-group">
+                <label for="userId">用户 ID</label>
+                <input type="number" id="userId" value="1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="gameId">游戏 ID</label>
+                <input type="number" id="gameId" value="1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="amount">订单金额（元）</label>
+                <input type="number" id="amount" value="99.00" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">订单描述</label>
+                <input type="text" id="description" value="游戏商城订单" required>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                创建订单并生成二维码
+            </button>
+        </form>
+
+        <div id="result" class="result">
+            <h3 style="margin-bottom: 15px; color: #333;">📱 扫码支付</h3>
+            
+            <div class="qrcode-container">
+                <div id="qrcode"></div>
+            </div>
+
+            <div class="tip">
+                💡 请使用微信扫描上方二维码完成支付
+            </div>
+
+            <div class="order-info">
+                <div class="info-row">
+                    <span class="info-label">订单号：</span>
+                    <span class="info-value" id="orderNo">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">订单金额：</span>
+                    <span class="info-value" id="orderAmount">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">支付状态：</span>
+                    <span class="info-value">
+                        <span class="status-badge status-pending" id="paymentStatus">待支付</span>
+                    </span>
+                </div>
+            </div>
+
+            <button class="btn" id="checkStatusBtn" style="margin-top: 15px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                查询支付状态
+            </button>
+        </div>
+
+        <div class="log" id="log">
+            <div class="log-entry">
+                <span class="log-time">[系统]</span> 准备就绪，等待创建订单...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8081/api';
+        let currentOrderNo = null;
+        let checkInterval = null;
+
+        // 添加日志
+        function addLog(message) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // 创建订单
+        document.getElementById('orderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const userId = document.getElementById('userId').value;
+            const gameId = document.getElementById('gameId').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const description = document.getElementById('description').value;
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '处理中...';
+
+            addLog(`开始创建订单: 用户ID=${userId}, 游戏ID=${gameId}, 金额=${amount}`);
+
+            try {
+                // 第一步：创建订单
+                const orderResponse = await fetch(`${API_BASE}/orders/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: parseInt(userId),
+                        paymentMethod: 'wechat',
+                        items: [
+                            { gameId: parseInt(gameId), quantity: 1 }
+                        ]
+                    })
+                });
+
+                const orderResult = await orderResponse.json();
+                addLog(`订单创建响应: ${JSON.stringify(orderResult)}`);
+
+                if (orderResult.code !== 200) {
+                    throw new Error(orderResult.message || '订单创建失败');
+                }
+
+                currentOrderNo = orderResult.data.orderNo;
+                const codeUrl = orderResult.data.codeUrl;
+
+                addLog(`订单创建成功: orderNo=${currentOrderNo}`);
+                addLog(`获取到二维码链接: ${codeUrl}`);
+
+                // 显示结果区域
+                document.getElementById('result').classList.add('show');
+                document.getElementById('orderNo').textContent = currentOrderNo;
+                document.getElementById('orderAmount').textContent = `¥${amount.toFixed(2)}`;
+
+                // 生成二维码
+                document.getElementById('qrcode').innerHTML = '';
+                new QRCode(document.getElementById('qrcode'), {
+                    text: codeUrl,
+                    width: 256,
+                    height: 256,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+                addLog('二维码已生成，请扫码支付');
+
+                // 自动开始轮询支付状态
+                startPolling();
+
+            } catch (error) {
+                addLog(`❌ 错误: ${error.message}`);
+                alert('订单创建失败: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '创建订单并生成二维码';
+            }
+        });
+
+        // 查询支付状态
+        document.getElementById('checkStatusBtn').addEventListener('click', checkPaymentStatus);
+
+        async function checkPaymentStatus() {
+            if (!currentOrderNo) {
+                alert('请先创建订单');
+                return;
+            }
+
+            addLog(`查询订单支付状态: ${currentOrderNo}`);
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/payment/wechat/order/query?orderNo=${currentOrderNo}`
+                );
+                const result = await response.json();
+
+                addLog(`查询结果: ${JSON.stringify(result)}`);
+
+                if (result.code === 200) {
+                    const status = result.data.status;
+                    const statusBadge = document.getElementById('paymentStatus');
+
+                    if (status === 'SUCCESS') {
+                        statusBadge.textContent = '支付成功';
+                        statusBadge.className = 'status-badge status-success';
+                        addLog('✅ 支付成功！');
+                        stopPolling();
+                        
+                        setTimeout(() => {
+                            alert('支付成功！订单已完成。');
+                        }, 500);
+                    } else if (status === 'FAIL') {
+                        statusBadge.textContent = '支付失败';
+                        statusBadge.className = 'status-badge status-failed';
+                        addLog('❌ 支付失败');
+                    } else {
+                        statusBadge.textContent = '待支付';
+                        statusBadge.className = 'status-badge status-pending';
+                        addLog('⏳ 等待支付...');
+                    }
+                }
+            } catch (error) {
+                addLog(`❌ 查询失败: ${error.message}`);
+            }
+        }
+
+        // 开始轮询
+        function startPolling() {
+            if (checkInterval) {
+                clearInterval(checkInterval);
+            }
+
+            addLog('开始自动轮询支付状态（每3秒）');
+            
+            checkInterval = setInterval(() => {
+                checkPaymentStatus();
+            }, 3000);
+        }
+
+        // 停止轮询
+        function stopPolling() {
+            if (checkInterval) {
+                clearInterval(checkInterval);
+                checkInterval = null;
+                addLog('停止轮询');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>广播通知 - 管理员</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        textarea,
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .radio-item input[type="radio"] {
+            cursor: pointer;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #0c5460;
+        }
+
+        .emoji-preview {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📢 广播通知</h1>
+        <p class="subtitle">向所有用户发送促销消息</p>
+
+        <div class="info-box">
+            💡 提示：广播消息会通过RabbitMQ异步发送，用户将在铃铛图标中看到通知。
+        </div>
+
+        <form id="broadcastForm">
+            <div class="form-group">
+                <label for="title">通知标题 *</label>
+                <input 
+                    type="text" 
+                    id="title" 
+                    name="title" 
+                    placeholder="例如：🎉 春季大促开启！"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="content">通知内容 *</label>
+                <textarea 
+                    id="content" 
+                    name="content" 
+                    placeholder="例如：全场游戏低至3折，限时7天！快来选购心仪的游戏吧~"
+                    required
+                ></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="gameId">关联游戏ID（可选）</label>
+                <input 
+                    type="number" 
+                    id="gameId" 
+                    name="gameId" 
+                    placeholder="输入游戏ID，点击通知可跳转到该游戏"
+                    min="1"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>广播范围</label>
+                <div class="radio-group">
+                    <div class="radio-item">
+                        <input type="radio" id="allUsers" name="scope" value="all" checked>
+                        <label for="allUsers" style="margin: 0; font-weight: normal;">所有用户</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" id="emailUsers" name="scope" value="email">
+                        <label for="emailUsers" style="margin: 0; font-weight: normal;">仅邮箱用户</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button type="submit" class="btn-primary" id="sendBtn">
+                    🚀 发送广播
+                </button>
+                <button type="button" class="btn-secondary" onclick="resetForm()">
+                    重置
+                </button>
+            </div>
+        </form>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://111.228.12.167/api';  // 线上地址
+
+        document.getElementById('broadcastForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('title').value.trim();
+            const content = document.getElementById('content').value.trim();
+            const gameId = document.getElementById('gameId').value;
+            const scope = document.querySelector('input[name="scope"]:checked').value;
+            const sendBtn = document.getElementById('sendBtn');
+            const resultDiv = document.getElementById('result');
+
+            // 验证
+            if (!title || !content) {
+                showResult('请填写标题和内容', 'error');
+                return;
+            }
+
+            // 禁用按钮
+            sendBtn.disabled = true;
+            sendBtn.textContent = '发送中...';
+            resultDiv.className = 'result';
+            resultDiv.style.display = 'none';
+
+            try {
+                const requestData = {
+                    title: title,
+                    content: content,
+                    gameId: gameId ? parseInt(gameId) : null,
+                    type: 'promotion'  // 默认类型
+                };
+
+                // 根据范围选择接口
+                const endpoint = scope === 'all' 
+                    ? '/admin/notifications/broadcast-promotion'
+                    : '/admin/notifications/broadcast-to-email-users';
+
+                const response = await fetch(API_BASE + endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+
+                if (data.code === 200) {
+                    showResult('✅ ' + data.message, 'success');
+                    resetForm();
+                } else {
+                    showResult('❌ ' + (data.message || '发送失败'), 'error');
+                }
+            } catch (error) {
+                console.error('发送失败:', error);
+                showResult('❌ 网络错误：' + error.message, 'error');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = '🚀 发送广播';
+            }
+        });
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.className = 'result ' + type;
+        }
+
+        function resetForm() {
+            document.getElementById('broadcastForm').reset();
+            document.getElementById('result').className = 'result';
+            document.getElementById('result').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

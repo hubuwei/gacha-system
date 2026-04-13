@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户注册测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .rules {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #555;
+        }
+        
+        .rules h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .rules ul {
+            list-style-position: inside;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 用户注册</h1>
+        
+        <div class="rules">
+            <h3>注册规则：</h3>
+            <ul>
+                <li>用户名长度：3-20 个字符</li>
+                <li>用户名只能包含：字母、数字、下划线</li>
+                <li>密码长度：6-50 个字符</li>
+                <li>注册成功赠送 1000 积分</li>
+            </ul>
+        </div>
+        
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username" required 
+                       placeholder="请输入用户名（3-20 个字符）"
+                       pattern="[a-zA-Z0-9_]{3,20}">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="请输入密码（6-50 个字符）"
+                       minlength="6" maxlength="50">
+            </div>
+            
+            <div class="form-group">
+                <label for="confirmPassword">确认密码</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required 
+                       placeholder="请再次输入密码"
+                       minlength="6" maxlength="50">
+            </div>
+            
+            <button type="submit" class="btn">立即注册</button>
+        </form>
+        
+        <div id="message" class="message"></div>
+        
+        <div class="login-link">
+            已有账号？<a href="/auth-service/login.html">立即登录</a>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE_URL = 'http://localhost:8081/api/auth';
+        
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const messageDiv = document.getElementById('message');
+            
+            // 验证密码是否一致
+            if (password !== confirmPassword) {
+                showMessage('两次输入的密码不一致', 'error');
+                return;
+            }
+            
+            // 验证用户名格式
+            const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+            if (!usernameRegex.test(username)) {
+                showMessage('用户名格式不正确，只能包含字母、数字和下划线，长度为 3-20 个字符', 'error');
+                return;
+            }
+            
+            // 验证密码长度
+            if (password.length < 6 || password.length > 50) {
+                showMessage('密码长度必须在 6-50 个字符之间', 'error');
+                return;
+            }
+            
+            try {
+                // 使用 @RequestBody 方式提交
+                const response = await fetch(`${API_BASE_URL}/register/body`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        confirmPassword: confirmPassword
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    showMessage('注册成功！赠送 1000 积分已到账', 'success');
+                    // 清空表单
+                    document.getElementById('registerForm').reset();
+                    
+                    // 显示用户信息
+                    setTimeout(() => {
+                        alert(`注册成功！\n用户名：${data.data.username}\n用户 ID: ${data.data.id}\n初始积分：${data.data.points}`);
+                    }, 500);
+                } else {
+                    showMessage(data.message || '注册失败', 'error');
+                }
+            } catch (error) {
+                console.error('注册请求失败:', error);
+                showMessage('网络错误，请稍后重试', 'error');
+            }
+        });
+        
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            // 3 秒后自动隐藏
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // 实时验证密码一致性
+        document.getElementById('confirmPassword').addEventListener('input', () => {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const messageDiv = document.getElementById('message');
+            
+            if (confirmPassword && password !== confirmPassword) {
+                messageDiv.textContent = '两次输入的密码不一致';
+                messageDiv.className = 'message error';
+                messageDiv.style.display = 'block';
+            } else if (confirmPassword && password === confirmPassword) {
+                messageDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

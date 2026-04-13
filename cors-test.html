@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CORS Test</title>
+</head>
+<body>
+    <h1>CORS 测试页面</h1>
+    <button onclick="testCors()">测试充值接口</button>
+    <div id="result"></div>
+    
+    <script>
+        async function testCors() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>正在测试...</p>';
+            
+            try {
+                console.log('发送 OPTIONS 预检请求...');
+                
+                // 先发送 OPTIONS 预检请求
+                const optionsResponse = await fetch('http://localhost:8082/api/recharge', {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type,Authorization'
+                    }
+                });
+                
+                console.log('OPTIONS 响应状态:', optionsResponse.status);
+                console.log('OPTIONS 响应头:', {
+                    'Access-Control-Allow-Origin': optionsResponse.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Credentials': optionsResponse.headers.get('Access-Control-Allow-Credentials'),
+                    'Access-Control-Allow-Headers': optionsResponse.headers.get('Access-Control-Allow-Headers'),
+                    'Access-Control-Allow-Methods': optionsResponse.headers.get('Access-Control-Allow-Methods')
+                });
+                
+                if (optionsResponse.status === 200 || optionsResponse.status === 204) {
+                    resultDiv.innerHTML = '<p style="color: green;">✅ OPTIONS 预检成功！CORS 配置正确。</p>';
+                    
+                    // 再发送实际的 POST 请求
+                    const token = localStorage.getItem('token') || '';
+                    const postResponse = await fetch('http://localhost:8082/api/recharge', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ amount: 100 })
+                    });
+                    
+                    console.log('POST 响应状态:', postResponse.status);
+                    const data = await postResponse.json();
+                    console.log('POST 响应数据:', data);
+                    
+                    resultDiv.innerHTML += `<p>POST 响应：${postResponse.status}</p>`;
+                    resultDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">❌ OPTIONS 预检失败！状态码：${optionsResponse.status}</p>`;
+                }
+            } catch (error) {
+                console.error('CORS 测试错误:', error);
+                resultDiv.innerHTML = `<p style="color: red;">❌ 错误：${error.message}</p>`;
+                resultDiv.innerHTML += `<p>这说明 CORS 配置有问题，或者服务没有启动。</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

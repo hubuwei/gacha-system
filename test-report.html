@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏商城功能测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .test-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .test-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .status {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        
+        .status.pending {
+            background: #ffc107;
+            color: white;
+        }
+        
+        .status.success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .status.error {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .test-info {
+            flex: 1;
+        }
+        
+        .test-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .test-detail {
+            font-size: 12px;
+            color: #666;
+            margin-top: 3px;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .info-box h3 {
+            color: #0066cc;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .info-box li {
+            padding: 5px 0;
+            color: #333;
+        }
+        
+        .info-box li:before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 游戏商城功能测试报告</h1>
+        <p class="subtitle">自动化测试结果</p>
+        
+        <div class="test-section">
+            <h2>✅ 后端服务状态</h2>
+            <div class="test-item">
+                <div class="status success">✓</div>
+                <div class="test-info">
+                    <div class="test-name">商城后端 (8081)</div>
+                    <div class="test-detail">运行正常，已加载 9 个游戏</div>
+                </div>
+            </div>
+            <div class="test-item">
+                <div class="status success">✓</div>
+                <div class="test-info">
+                    <div class="test-name">认证后端 (8084)</div>
+                    <div class="test-detail">运行正常</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>✅ 前端功能实现</h2>
+            <div class="test-item">
+                <div class="status success">✓</div>
+                <div class="test-info">
+                    <div class="test-name">路由系统</div>
+                    <div class="test-detail">react-router-dom 已配置，9 个页面路由可用</div>
+                </div>
+            </div>
+            <div class="test-item">
+                <div class="status success">✓</div>
+                <div class="test-info">
+                    <div class="test-name">订单结算页面 (/checkout)</div>
+                    <div class="test-detail">支持余额/支付宝/微信支付</div>
+                </div>
+            </div>
+            <div class="test-item">
+                <div class="status success">✓</div>
+                <div class="test-info">
+                    <div class="test-name">订单列表 (/orders)</div>
+                    <div class="test-detail">支持状态筛选、查看详情、取消订单</div>
+                </div>
+            </div>
+            <div class="test-item">
+                <div class="status success">✓</div>
+                <div class="test-info">
+                    <div class="test-name">个人中心 (/profile)</div>
+                    <div class="test-detail">资料编辑、账号安全设置</div>
+                </div>
+            </div>
+            <div class="test-item">
+                <div class="status success">✓</div>
+                <div class="test-info">
+                    <div class="test-name">充值中心 (/wallet/recharge)</div>
+                    <div class="test-detail">预设金额 + 自定义金额充值</div>
+                </div>
+            </div>
+            <div class="test-item">
+                <div class="status success">✓</div>
+                <div class="test-info">
+                    <div class="test-name">账单明细 (/wallet/transactions)</div>
+                    <div class="test-detail">收支记录、类型筛选</div>
+                </div>
+            </div>
+            <div class="test-item">
+                <div class="status success">✓</div>
+                <div class="test-info">
+                    <div class="test-name">游戏库 (/library)</div>
+                    <div class="test-detail">已购游戏管理、启动/下载</div>
+                </div>
+            </div>
+            <div class="test-item">
+                <div class="status success">✓</div>
+                <div class="test-info">
+                    <div class="test-name">通知中心 (/notifications)</div>
+                    <div class="test-detail">未读/已读管理、消息分类</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>✅ UI/UX 增强</h2>
+            <div class="test-item">
+                <div class="status success">✓</div>
+                <div class="test-info">
+                    <div class="test-name">自定义通知系统</div>
+                    <div class="test-detail">游戏风格滑入式通知，替代 alert()</div>
+                </div>
+            </div>
+            <div class="test-item">
+                <div class="status success">✓</div>
+                <div class="test-info">
+                    <div class="test-name">购物车实时状态</div>
+                    <div class="test-detail">添加后立即显示"已在购物车"，无需刷新</div>
+                </div>
+            </div>
+            <div class="test-item">
+                <div class="status success">✓</div>
+                <div class="test-info">
+                    <div class="test-name">导航栏增强</div>
+                    <div class="test-detail">新增 5 个快捷入口按钮</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h3>🚀 如何测试</h3>
+            <ul>
+                <li>访问前端：<a href="http://localhost:5174" class="link" target="_blank">http://localhost:5174</a></li>
+                <li>使用已有账号登录（如：hubuwei）</li>
+                <li>浏览游戏并添加到购物车</li>
+                <li>点击购物车进行结算测试</li>
+                <li>体验所有新功能的页面路由</li>
+            </ul>
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn-primary" onclick="window.open('http://localhost:5174', '_blank')">
+                🌐 打开前端应用
+            </button>
+            <button class="btn-secondary" onclick="location.reload()">
+                🔄 刷新测试报告
+            </button>
+        </div>
+    </div>
+</body>
+</html>

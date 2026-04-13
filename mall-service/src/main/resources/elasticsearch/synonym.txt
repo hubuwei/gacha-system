@@ -1,0 +1,25 @@
+# 游戏同义词配置
+# 格式：同义词1,同义词2,同义词3 => 标准词
+
+# 游戏类型同义词
+RPG,角色扮演,role-playing game => RPG
+FPS,第一人称射击,first-person shooter => FPS
+MOBA,多人在线战术竞技 => MOBA
+RTS,即时战略,real-time strategy => RTS
+
+# 常见游戏名称别名
+GTA5,GTA V,侠盗猎车手5,Grand Theft Auto V => GTA5
+COD,使命召唤,Call of Duty => COD
+LOL,英雄联盟,League of Legends => LOL
+CSGO,CS:GO,反恐精英,Counter-Strike => CSGO
+
+# 游戏术语
+开放世界,沙盒,sandbox => 开放世界
+单机,单人,single-player => 单机
+联机,多人,multiplayer,online => 联机
+免费,f2p,free-to-play => 免费
+
+# 平台相关
+PC,电脑,computer => PC
+主机,console => 主机
+手机,mobile,手游 => 手机

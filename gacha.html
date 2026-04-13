@@ -1,0 +1,2161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽奖系统</title>
+    <!-- 引入 Vue 3 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+        }
+        
+        .layout {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .announcement {
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            color: white;
+            padding: 10px 30px;
+            text-align: center;
+            font-weight: bold;
+            animation: scroll 20s linear infinite;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .welcome-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .balance-info {
+            display: flex;
+            gap: 15px;
+            font-size: 16px;
+        }
+        
+        .balance-item {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .region-select {
+            width: 200px;
+        }
+        
+        .content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+        
+        .gacha-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 60px 80px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            animation: float 3s ease-in-out infinite;
+            max-width: 90%;
+            width: 500px;
+            position: relative;
+        }
+        
+        /* 抽奖中动画 */
+        @keyframes gachaSpin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .gacha-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            display: none !important;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .gacha-loading.show {
+            display: flex;
+        }
+        
+        .gacha-loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            animation: gachaSpin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        .gacha-loading-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4facfe;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .gacha-title {
+            font-size: 36px;
+            font-weight: bold;
+            color: #4facfe;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .gacha-buttons {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .gacha-button {
+            width: 200px;
+            height: 60px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .gacha-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .gacha-button:active {
+            transform: scale(0.98);
+        }
+        
+        .gacha-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+        }
+        
+        .gacha-button:hover::before {
+            left: 100%;
+        }
+        
+        /* 按钮加载状态 */
+        .gacha-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .gacha-button:disabled:hover {
+            box-shadow: none;
+        }
+        
+        /* 登录和注册按钮样式 */
+        .login-button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .login-button-group n-button {
+            min-width: 100px;
+        }
+        
+        /* 入场动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header, .footer {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .header {
+            animation-delay: 0.1s;
+        }
+        
+        .gacha-container {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .footer {
+            animation-delay: 0.5s;
+        }
+        
+        /* 抽奖结果动画 */
+        @keyframes resultAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) rotate(-5deg);
+            }
+            50% {
+                transform: scale(1.1) rotate(2deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0);
+            }
+        }
+        
+        .result-card {
+            animation: resultAppear 0.6s ease-out;
+        }
+        
+        /* 稀有度发光效果 */
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 5px rgba(255, 107, 107, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(255, 107, 107, 0.8), 0 0 30px rgba(255, 107, 107, 0.5);
+            }
+        }
+        
+        .rarity-5 {
+            color: #ff6b6b;
+            font-weight: bold;
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        .price-info {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        /* 模态框样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+        
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+        
+        .register-rules {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #555;
+        }
+        
+        .register-rules h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .register-rules ul {
+            list-style-position: inside;
+            line-height: 1.8;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* 充值网格 */
+        .recharge-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .recharge-item {
+            text-align: center;
+        }
+        
+        /* 结果网格 */
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .result-item {
+            text-align: center;
+        }
+        
+        /* 记录表格 */
+        .records-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .records-table th,
+        .records-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .records-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+                text-align: center;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .balance-info {
+                gap: 10px;
+                font-size: 14px;
+            }
+            
+            .region-select {
+                width: 100%;
+                max-width: 200px;
+            }
+            
+            .gacha-container {
+                padding: 40px 20px;
+                width: 95%;
+            }
+            
+            .gacha-title {
+                font-size: 28px;
+                margin-bottom: 30px;
+            }
+            
+            .gacha-buttons {
+                gap: 15px;
+            }
+            
+            .gacha-button {
+                width: 150px;
+                height: 50px;
+                font-size: 16px;
+            }
+            
+            .result-icon {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .result-name {
+                font-size: 24px;
+            }
+            
+            .recharge-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .content {
+                padding: 20px 10px;
+            }
+            
+            .gacha-container {
+                padding: 30px 15px;
+            }
+            
+            .gacha-title {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            
+            .gacha-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .gacha-button {
+                width: 200px;
+            }
+            
+            .footer {
+                padding: 15px;
+            }
+            
+            .history-title {
+                font-size: 18px;
+            }
+            
+            .recharge-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .footer {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .history-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .result-card {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .result-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4facfe;
+            margin-bottom: 20px;
+        }
+        
+        .result-icon {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            margin: 20px auto;
+            display: block;
+        }
+        
+        .rarity-5 {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        
+        .rarity-4 {
+            color: #a855f7;
+            font-weight: bold;
+        }
+        
+        .rarity-3 {
+            color: #3b82f6;
+            font-weight: bold;
+        }
+        
+        .records-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- <h1>TEST: 如果看到这行字，说明 HTML 能加载</h1> -->
+    <div id="app" class="layout">
+        <!-- 活动公告 -->
+        <div class="announcement">
+            🎉 限时活动：首次充值送100%额外金币 | 十连抽必中SR以上角色 | 每日登录送抽奖券
+        </div>
+        
+        <!-- 顶部：用户信息 + 大区选择 -->
+        <header class="header">
+            <div class="user-info">
+                <span class="welcome-text">👋 欢迎，{{ displayName }}</span>
+                <div class="balance-info">
+                    <span class="balance-item">💰 余额：¥{{ displayBalance }}</span>
+                    <span class="balance-item">⭐ 积分：{{ displayPoints }}</span>
+                    <button v-if="isLoggedIn" type="button" style="background: #ff9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px;" @click="showRechargeModal = true">
+                        💸 充值
+                    </button>
+                    <button v-if="isLoggedIn" type="button" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-left: 8px;" @click="goToExchangePage">
+                        🎁 积分兑换
+                    </button>
+                    <button v-if="isLoggedIn" type="button" style="background: #4caf50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-left: 8px;" @click="handleCheckIn" :disabled="checkInLoading">
+                        📅 {{ checkInButtonText }}
+                    </button>
+                    <button v-if="isLoggedIn" type="button" style="background: #f44336; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-left: 8px;" @click="handleLogout">
+                        🚪 退出
+                    </button>
+                    <template v-else>
+                        <button type="button" style="background: #4facfe; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;" @click="showLoginModal = true">
+                            登录
+                        </button>
+                        <button type="button" style="background: #f5f5f5; color: #333; border: 1px solid #ddd; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-left: 10px;" @click="showRegisterModal = true">
+                            注册
+                        </button>
+                    </template>
+                </div>
+            </div>
+            <select 
+                v-model="selectedRegion" 
+                class="region-select"
+                @change="onRegionChange"
+            >
+                <option v-for="option in regionOptions" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                </option>
+            </select>
+        </header>
+
+        <!-- 登录弹窗 -->
+        <div v-if="showLoginModal" class="modal-overlay" @click="closeLoginModal">
+            <div class="modal-content" @click.stop>
+                <div class="modal-header">
+                    <h2 style="font-size: 24px; font-weight: bold;">🔐 用户登录</h2>
+                    <button type="button" class="modal-close" @click="closeLoginModal">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="login-modal-content">
+                        <div class="form-group">
+                            <label for="login-username">用户名</label>
+                            <input 
+                                id="login-username"
+                                v-model="loginForm.username" 
+                                type="text"
+                                placeholder="请输入用户名"
+                                class="form-input"
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">密码</label>
+                            <input 
+                                id="login-password"
+                                v-model="loginForm.password" 
+                                type="password"
+                                placeholder="请输入密码"
+                                class="form-input"
+                            />
+                        </div>
+                        
+                        <div class="login-button-group">
+                            <button type="button" style="background: #4facfe; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" @click="handleLogin" :disabled="loginLoading">
+                                {{ loginLoading ? '登录中...' : '登录' }}
+                            </button>
+                            <button type="button" style="background: #f5f5f5; color: #333; border: 1px solid #ddd; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 10px;" @click="closeLoginModal">
+                                取消
+                            </button>
+                        </div>
+                        
+                        <div class="register-link" style="text-align: center; margin-top: 15px;">
+                            暂无账号？<a @click="showRegisterModal = true">前往注册</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+                    
+        <!-- 注册弹窗 -->
+        <div v-if="showRegisterModal" class="modal-overlay" @click="closeRegisterModal">
+            <div class="modal-content" @click.stop>
+                <div class="modal-header">
+                    <h2 style="font-size: 24px; font-weight: bold;">📝 用户注册</h2>
+                    <button type="button" class="modal-close" @click="closeRegisterModal">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="login-modal-content">
+                        <!-- 注册规则提示 -->
+                        <div class="register-rules">
+                            <h3>📋 注册规则：</h3>
+                            <ul>
+                                <li>用户名长度：3-20 个字符</li>
+                                <li>用户名只能包含：字母、数字、下划线</li>
+                                <li>密码长度：6-50 个字符</li>
+                                <li>注册成功赠送 1000 积分</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="register-username">用户名</label>
+                            <input 
+                                id="register-username"
+                                v-model="registerForm.username" 
+                                type="text"
+                                placeholder="请输入用户名（3-20 个字符）"
+                                class="form-input"
+                                @input="validateRegisterUsername"
+                            />
+                            <div v-if="registerFormErrors.username" style="color: #ff6b6b; font-size: 12px; margin-top: 5px;">
+                                {{ registerFormErrors.username }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">密码</label>
+                            <input 
+                                id="register-password"
+                                v-model="registerForm.password" 
+                                type="password"
+                                placeholder="请输入密码（6-50 个字符）"
+                                class="form-input"
+                                @input="validateRegisterPassword"
+                            />
+                            <div v-if="registerFormErrors.password" style="color: #ff6b6b; font-size: 12px; margin-top: 5px;">
+                                {{ registerFormErrors.password }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-confirm-password">确认密码</label>
+                            <input 
+                                id="register-confirm-password"
+                                v-model="registerForm.confirmPassword" 
+                                type="password"
+                                placeholder="请再次输入密码"
+                                class="form-input"
+                                @input="validateConfirmPassword"
+                            />
+                            <div v-if="registerFormErrors.confirmPassword" style="color: #ff6b6b; font-size: 12px; margin-top: 5px;">
+                                {{ registerFormErrors.confirmPassword }}
+                            </div>
+                        </div>
+                        
+                        <!-- 全局错误提示 -->
+                        <div v-if="registerGlobalError" style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #f5c6cb; font-size: 14px;">
+                            {{ registerGlobalError }}
+                        </div>
+                        
+                        <div class="login-button-group">
+                            <button type="button" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: 600; transition: all 0.3s ease;" @click="handleRegister" :disabled="registerLoading || !canSubmitRegister" @mouseenter="event => event.target.style.transform = 'translateY(-2px)'" @mouseleave="event => event.target.style.transform = 'translateY(0)'">
+                                {{ registerLoading ? '注册中...' : '立即注册' }}
+                            </button>
+                            <button type="button" style="background: #f5f5f5; color: #333; border: 1px solid #ddd; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 10px;" @click="closeRegisterModal">
+                                取消
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+                    
+        <!-- 充值弹窗 -->
+        <div v-if="showRechargeModal" class="modal-overlay" @click="closeRechargeModal">
+            <div class="modal-content" @click.stop>
+                <div class="modal-header">
+                    <h2 style="font-size: 24px; font-weight: bold;">💸 充值中心</h2>
+                    <button type="button" class="modal-close" @click="closeRechargeModal">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="login-modal-content">
+                        <div style="margin-bottom: 20px; text-align: center;">
+                            <p style="font-size: 16px; margin-bottom: 10px;">当前余额：¥{{ displayBalance }}</p>
+                            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">选择充值金额：</p>
+                            
+                            <div class="recharge-grid">
+                                <div v-for="amount in rechargeOptions" :key="amount" class="recharge-item">
+                                    <button 
+                                        type="button" 
+                                        :style="{
+                                            background: selectedRechargeAmount === amount ? '#4facfe' : '#f5f5f5',
+                                            color: selectedRechargeAmount === amount ? 'white' : '#333',
+                                            border: selectedRechargeAmount === amount ? 'none' : '1px solid #ddd'
+                                        }"
+                                        @click="selectedRechargeAmount = amount"
+                                        style="width: 100%; padding: 8px; border-radius: 4px; cursor: pointer;"
+                                    >
+                                        ¥{{ amount }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="login-button-group">
+                            <button type="button" style="background: #4facfe; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" @click="handleRecharge" :disabled="rechargeLoading">
+                                {{ rechargeLoading ? '充值中...' : '确认充值' }}
+                            </button>
+                            <button type="button" style="background: #f5f5f5; color: #333; border: 1px solid #ddd; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 10px;" @click="closeRechargeModal">
+                                取消
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 抢购弹窗 -->
+        <div v-if="showSeckillModal" class="modal-overlay" @click="closeSeckillModal">
+            <div class="modal-content" @click.stop>
+                <div class="modal-header">
+                    <h2 style="font-size: 24px; font-weight: bold;">📱 1 积分抢 iPhone17ProMax</h2>
+                    <button type="button" class="modal-close" @click="closeSeckillModal">×</button>
+                </div>
+                <div class="modal-body">
+                    <div style="text-align: center; padding: 20px 0;">
+                        <!-- 商品图片 -->
+                        <div style="margin-bottom: 20px;">
+                            <img src="https://img14.360buyimg.com/n1/s450x450_jfs/t1/268455/34/3005/74793/6d45b58cF94e3a867/3b2e5e0f6f4e1e3a.jpg" 
+                                 alt="iPhone 17 Pro Max" 
+                                 style="width: 300px; height: 300px; object-fit: cover; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"
+                                 onerror="this.src='https://via.placeholder.com/300x300?text=iPhone+17+Pro+Max'" />
+                        </div>
+                        
+                        <!-- 商品信息 -->
+                        <div style="margin-bottom: 30px;">
+                            <h3 style="font-size: 22px; color: #333; margin-bottom: 10px;">Apple iPhone 17 Pro Max (256GB)</h3>
+                            <p style="font-size: 16px; color: #ff6b6b; font-weight: bold; margin: 10px 0;">抢购价：1 积分</p>
+                            <p style="font-size: 14px; color: #666;">市场价：¥9999</p>
+                        </div>
+                        
+                        <!-- 倒计时 -->
+                        <div v-if="shouldShowCountdown" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                            <p style="font-size: 14px; margin-bottom: 10px;">⏰ 距离下次抢购还有</p>
+                            <p style="font-size: 36px; font-weight: bold; font-family: 'Courier New', monospace;">{{ countdown }}</p>
+                            <p style="font-size: 12px; margin-top: 10px; opacity: 0.9;">每 2 小时开启一轮抢购</p>
+                        </div>
+                        
+                        <!-- 抢购进行中提示 -->
+                        <div v-else style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                            <p style="font-size: 24px; font-weight: bold;">🎉 抢购进行中！</p>
+                            <p style="font-size: 14px; margin-top: 10px;">抓紧时间立即抢购</p>
+                        </div>
+                        
+                        <!-- 库存信息 -->
+                        <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: center; border-left: 4px solid #2196f3;">
+                            <p style="font-size: 16px; color: #1976d2; font-weight: bold;">📦 剩余库存：{{ remainingStock }} 件</p>
+                            <p style="font-size: 12px; color: #666; margin-top: 5px;">库存有限，先到先得</p>
+                        </div>
+                        
+                        <!-- 用户信息提示 -->
+                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: left;">
+                            <p style="font-size: 14px; color: #555; margin-bottom: 8px;">👤 当前用户：{{ displayName }}</p>
+                            <p style="font-size: 14px; color: #555; margin-bottom: 8px;">⭐ 可用积分：{{ displayPoints }} 积分</p>
+                            <p style="font-size: 14px; color: #555;" v-if="hasParticipated">✅ 已参与本次抢购</p>
+                            <p style="font-size: 14px; color: #ff6b6b;" v-else>⚠️ 每个用户每轮仅限参与 1 次</p>
+                        </div>
+                        
+                        <!-- 抢购规则 -->
+                        <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: left; border-left: 4px solid #ffc107;">
+                            <h4 style="font-size: 14px; color: #856404; margin-bottom: 8px;">📋 抢购规则：</h4>
+                            <ul style="font-size: 13px; color: #856404; line-height: 1.8; margin: 0; padding-left: 20px;">
+                                <li>抢购价格：1 积分</li>
+                                <li>抢购时间：每 2 小时一次（整点开始）</li>
+                                <li>限购数量：每个用户每轮限购 1 件</li>
+                                <li>库存有限，先到先得</li>
+                                <li>抢购成功后积分不予退还</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- 操作按钮 -->
+                        <div style="display: flex; gap: 10px; justify-content: center;">
+                            <button 
+                                type="button" 
+                                :style="{
+                                    background: seckillLoading || hasParticipated || remainingStock <= 0 || countdownSeconds > 60 ? '#cccccc' : 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '12px 30px',
+                                    borderRadius: '5px',
+                                    cursor: (seckillLoading || hasParticipated || remainingStock <= 0 || countdownSeconds > 60) ? 'not-allowed' : 'pointer',
+                                    fontSize: '16px',
+                                    fontWeight: 'bold',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: (seckillLoading || hasParticipated || remainingStock <= 0 || countdownSeconds > 60) ? 'none' : '0 4px 15px rgba(255, 107, 107, 0.4)'
+                                }"
+                                @click="handleSeckill"
+                                :disabled="seckillLoading || hasParticipated || remainingStock <= 0 || countdownSeconds > 60"
+                            >
+                                {{ getSeckillButtonText() }}
+                            </button>
+                            <button 
+                                type="button" 
+                                style="background: #f5f5f5; color: #333; border: 1px solid #ddd; padding: 12px 30px; border-radius: 5px; cursor: pointer; font-size: 16px;"
+                                @click="closeSeckillModal"
+                            >
+                                取消
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 中部：抽奖区域 -->
+        <main class="content">
+            <div class="gacha-container">
+                <h1 class="gacha-title">✨ 幸运抽奖 ✨</h1>
+                <div class="gacha-buttons">
+                    <button 
+                        type="button" 
+                        class="gacha-button"
+                        style="background: #4facfe; color: white; border: none;" 
+                        @click="singleDraw" 
+                        :disabled="!isLoggedIn || displayBalance < 10 || loading"
+                    >
+                        {{ loading ? '抽奖中...' : '🎯 单抽' }}
+                    </button>
+                    <button 
+                        type="button" 
+                        class="gacha-button"
+                        style="background: #4caf50; color: white; border: none;" 
+                        @click="tenDraw" 
+                        :disabled="!isLoggedIn || displayBalance < 100 || loading"
+                    >
+                        {{ loading ? '抽奖中...' : '🎉 十连' }}
+                    </button>
+                    <button 
+                        type="button" 
+                        class="gacha-button"
+                        style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; border: none; box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);" 
+                        @click="openSeckillModal" 
+                        :disabled="!isLoggedIn"
+                    >
+                        📱 1 积分抢 iPhone17ProMax
+                    </button>
+                </div>
+                <div class="price-info">
+                    <p>单抽价格：¥10 | 十连价格：¥100</p>
+                    <p v-if="isLoggedIn && displayBalance < 10" style="color: #ff6b6b; margin-top: 10px;">
+                        ⚠️ 余额不足，请先充值
+                    </p>
+                </div>
+                
+                <!-- 抽奖中动画 -->
+                <div v-show="loading" class="gacha-loading">
+                    <div class="gacha-loading-spinner"></div>
+                    <div class="gacha-loading-text">{{ loadingText }}</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部：历史记录 -->
+        <footer class="footer">
+            <h2 class="history-title">📜 抽奖记录</h2>
+            <div class="records-list">
+                <table class="records-table">
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>类型</th>
+                            <th>获得物品</th>
+                            <th>稀有度</th>
+                            <th>消耗</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(record, index) in recentRecords" :key="index">
+                            <td>{{ record.time }}</td>
+                            <td>{{ record.type === 'single' ? '单抽' : '十连' }}</td>
+                            <td>{{ record.itemName }}</td>
+                            <td><span :class="'rarity-' + record.rarity">{{ getRarityText(record.rarity) }}</span></td>
+                            <td>¥{{ record.cost }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </footer>
+
+        <!-- 抽奖结果弹窗 -->
+        <div v-if="showResultModal" class="modal-overlay" @click="showResultModal = false">
+            <div class="modal-content" @click.stop>
+                <div class="modal-header">
+                    <h2 style="font-size: 24px; font-weight: bold;">🎊 抽奖结果 🎊</h2>
+                    <button type="button" class="modal-close" @click="showResultModal = false">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="result-card">
+                        <div v-if="drawResults.length === 1">
+                            <div class="result-name" :class="getRarityClass(drawResults[0].rarity)">
+                                {{ drawResults[0].name }}
+                            </div>
+                            <img :src="drawResults[0].icon" class="result-icon" alt="result" loading="lazy" />
+                            <p style="font-size: 16px; color: #666;">
+                                稀有度：<span :class="getRarityClass(drawResults[0].rarity)">
+                                    {{ getRarityText(drawResults[0].rarity) }}
+                                </span>
+                            </p>
+                        </div>
+                        <div v-else>
+                            <div class="result-grid">
+                                <div v-for="(item, index) in drawResults" :key="index" class="result-item">
+                                    <div style="background: #f5f5f5; padding: 15px; border-radius: 10px;">
+                                        <div class="result-name" :class="getRarityClass(item.rarity)" style="font-size: 18px;">
+                                            {{ item.name }}
+                                        </div>
+                                        <img :src="item.icon" style="width: 80px; height: 80px; object-fit: contain; margin: 10px auto;" alt="result" loading="lazy" />
+                                        <p style="font-size: 14px; color: #666;">
+                                            <span :class="getRarityClass(item.rarity)">
+                                                {{ getRarityText(item.rarity) }}
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" style="background: #4facfe; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px;" @click="showResultModal = false">
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        // 模拟 message 函数
+        const message = {
+            success: (text) => alert('成功: ' + text),
+            error: (text) => alert('错误: ' + text)
+        };
+
+        createApp({
+            setup() {
+                
+                // API 基础地址
+                const AUTH_API_BASE = 'http://localhost:8081';    // 认证服务
+                const GAME_API_BASE = 'http://localhost:8082';    // 游戏服务（充值、积分）
+                const GACHA_API_BASE = 'http://localhost:8083';   // 抽奖服务
+                
+                // 用户信息
+                const username = ref('游客');
+                const balance = ref(1000);
+                const points = ref(0);
+                const userId = ref(null);
+                const token = ref(localStorage.getItem('token') || '');
+                
+                // 大区选项
+                const selectedRegion = ref(null);
+                const regionOptions = [
+                    { label: '华东一区', value: 1 },
+                    { label: '华东二区', value: 2 },
+                    { label: '华北一区', value: 3 },
+                    { label: '华南一区', value: 4 },
+                    { label: '华西一区', value: 5 }
+                ];
+                
+                // 抽奖状态
+                const loading = ref(false);
+                const showResultModal = ref(false);
+                const drawResults = ref([]);
+                const loadingText = ref('正在抽奖中...');
+                
+                // 抽奖记录
+                const records = ref([]);
+                
+                // 登录状态
+                const isLoggedIn = ref(false);
+                const showLoginModal = ref(false);
+                const showRegisterModal = ref(false);
+                const showRechargeModal = ref(false);
+                const loginLoading = ref(false);
+                const registerLoading = ref(false);
+                const rechargeLoading = ref(false);
+                const checkInLoading = ref(false);
+                const checkInStatus = ref(null);
+                
+                // 抢购相关
+                const showSeckillModal = ref(false);
+                const seckillLoading = ref(false);
+                const countdown = ref('');
+                const nextSeckillTime = ref(null);
+                const canParticipate = ref(true);
+                const hasParticipated = ref(false);
+                const remainingStock = ref(0);
+                const seckillProductId = ref(1);  // 默认商品 ID
+                const countdownSeconds = ref(0);  // 倒计时秒数
+                
+                // 充值相关
+                const rechargeOptions = ref([10, 50, 100, 200, 500, 1000]);
+                const selectedRechargeAmount = ref(100);
+                
+                // 显示名称（计算属性）
+                const displayName = computed(() => {
+                    return isLoggedIn.value ? username.value : '游客';
+                });
+                
+                // 显示余额（计算属性）
+                const displayBalance = computed(() => {
+                    return isLoggedIn.value ? balance.value : 0;
+                });
+                
+                // 显示积分（计算属性）
+                const displayPoints = computed(() => {
+                    return isLoggedIn.value ? points.value : 0;
+                });
+                
+                // 签到按钮文本（计算属性）
+                const checkInButtonText = computed(() => {
+                    if (checkInLoading.value) {
+                        return '签到中...';
+                    }
+                    if (checkInStatus.value && checkInStatus.value.checkedInToday) {
+                        return '今日已签到';
+                    }
+                    return '📅 签到';
+                });
+                
+                // 登录表单
+                const loginForm = ref({
+                    username: '',
+                    password: ''
+                });
+                
+                // 注册表单
+                const registerForm = ref({
+                    username: '',
+                    password: '',
+                    confirmPassword: ''
+                });
+                
+                // 注册表单错误信息
+                const registerFormErrors = ref({
+                    username: '',
+                    password: '',
+                    confirmPassword: ''
+                });
+                
+                // 全局错误提示
+                const registerGlobalError = ref('');
+                
+                // 表单验证规则
+                const loginRules = {
+                    username: {
+                        required: true,
+                        message: '请输入用户名',
+                        trigger: 'blur'
+                    },
+                    password: {
+                        required: true,
+                        message: '请输入密码',
+                        trigger: 'blur'
+                    }
+                };
+                
+                const registerRules = {
+                    username: {
+                        required: true,
+                        message: '请输入用户名',
+                        trigger: 'blur'
+                    },
+                    password: {
+                        required: true,
+                        message: '请输入密码',
+                        trigger: 'blur',
+                        min: 6,
+                        max: 20,
+                        message: '密码长度应在 6-20 个字符之间'
+                    },
+                    confirmPassword: {
+                        required: true,
+                        message: '请再次输入密码',
+                        trigger: 'blur',
+                        validator: (rule, value) => {
+                            return value === registerForm.value.password;
+                        },
+                        message: '两次输入的密码不一致'
+                    }
+                };
+                
+                // 验证用户名格式
+                const validateRegisterUsername = () => {
+                    const username = registerForm.value.username.trim();
+                    registerFormErrors.value.username = '';
+                    
+                    if (!username) {
+                        registerFormErrors.value.username = '用户名不能为空';
+                        return false;
+                    }
+                    
+                    if (username.length < 3 || username.length > 20) {
+                        registerFormErrors.value.username = '用户名长度必须在 3-20 个字符之间';
+                        return false;
+                    }
+                    
+                    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+                    if (!usernameRegex.test(username)) {
+                        registerFormErrors.value.username = '用户名只能包含字母、数字和下划线';
+                        return false;
+                    }
+                    
+                    return true;
+                };
+                
+                // 验证密码
+                const validateRegisterPassword = () => {
+                    const password = registerForm.value.password;
+                    registerFormErrors.value.password = '';
+                    
+                    if (!password) {
+                        registerFormErrors.value.password = '密码不能为空';
+                        return false;
+                    }
+                    
+                    if (password.length < 6 || password.length > 50) {
+                        registerFormErrors.value.password = '密码长度必须在 6-50 个字符之间';
+                        return false;
+                    }
+                    
+                    return true;
+                };
+                
+                // 验证确认密码
+                const validateConfirmPassword = () => {
+                    const confirmPassword = registerForm.value.confirmPassword;
+                    const password = registerForm.value.password;
+                    registerFormErrors.value.confirmPassword = '';
+                    
+                    if (!confirmPassword) {
+                        registerFormErrors.value.confirmPassword = '请再次输入密码';
+                        return false;
+                    }
+                    
+                    if (confirmPassword !== password) {
+                        registerFormErrors.value.confirmPassword = '两次输入的密码不一致';
+                        return false;
+                    }
+                    
+                    return true;
+                };
+                
+                // 检查是否可以提交
+                const canSubmitRegister = computed(() => {
+                    return validateRegisterUsername() && 
+                           validateRegisterPassword() && 
+                           validateConfirmPassword();
+                });
+                
+                const theme = ref(undefined);
+                
+                // 表格列配置
+                const columns = [
+                    {
+                        title: '时间',
+                        key: 'time',
+                        width: 180
+                    },
+                    {
+                        title: '类型',
+                        key: 'type',
+                        width: 80,
+                        render: (row) => row.type === 'single' ? '单抽' : '十连'
+                    },
+                    {
+                        title: '获得物品',
+                        key: 'itemName',
+                        width: 200
+                    },
+                    {
+                        title: '稀有度',
+                        key: 'rarity',
+                        width: 100,
+                        render: (row) => {
+                            const rarityText = getRarityText(row.rarity);
+                            return `<span class="rarity-${row.rarity}">${rarityText}</span>`;
+                        }
+                    },
+                    {
+                        title: '消耗',
+                        key: 'cost',
+                        width: 80,
+                        render: (row) => `¥${row.cost}`
+                    }
+                ];
+                
+                // 最近记录（用于表格显示）
+                const recentRecords = computed(() => {
+                    return records.value.slice(0, 100);
+                });
+                
+                // 分页配置
+                const pagination = {
+                    pageSize: 10
+                };
+                
+                // 稀有度文本
+                const getRarityText = (rarity) => {
+                    const map = {
+                        5: '★★★★★ (SSR)',
+                        4: '★★★★ (SR)',
+                        3: '★★★ (R)'
+                    };
+                    return map[rarity] || '★';
+                };
+                
+                // 稀有度样式类
+                const getRarityClass = (rarity) => {
+                    return `rarity-${rarity}`;
+                };
+                
+                // 获取稀有度颜色
+                const getRarityColor = (rarity) => {
+                    const colors = {
+                        5: 'ff6b6b', // SSR - 红色
+                        4: 'a855f7', // SR - 紫色
+                        3: '3b82f6', // R - 蓝色
+                        2: '6b7280', // N - 灰色
+                        1: 'fbbf24'  // 普通 - 金色
+                    };
+                    return colors[rarity] || '6b7280';
+                };
+                
+                // 获取稀有度图标
+                const getRarityIcon = (rarity) => {
+                    const icons = {
+                        5: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=anime%20character%20with%20glowing%20aura%20SSR%20rarity&image_size=square',
+                        4: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=anime%20character%20SR%20rarity&image_size=square',
+                        3: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=anime%20character%20R%20rarity&image_size=square'
+                    };
+                    return icons[rarity] || icons[3];
+                };
+                
+                // 大区变更
+                const onRegionChange = (value) => {
+                    console.log('切换到大区:', value);
+                    const region = regionOptions.find(r => r.value === value);
+                    if (region) {
+                        message.success(`已切换到 ${region.label}`);
+                    }
+                };
+                
+                // 关闭登录弹窗
+                const closeLoginModal = () => {
+                    showLoginModal.value = false;
+                    loginForm.value = {
+                        username: '',
+                        password: ''
+                    };
+                };
+                
+                // 关闭注册弹窗
+                const closeRegisterModal = () => {
+                    showRegisterModal.value = false;
+                    registerForm.value = {
+                        username: '',
+                        password: '',
+                        confirmPassword: ''
+                    };
+                    registerFormErrors.value = {
+                        username: '',
+                        password: '',
+                        confirmPassword: ''
+                    };
+                    registerGlobalError.value = '';
+                };
+                
+                // 关闭充值弹窗
+                const closeRechargeModal = () => {
+                    showRechargeModal.value = false;
+                    selectedRechargeAmount.value = 100;
+                };
+                
+                // 关闭抢购弹窗
+                const closeSeckillModal = () => {
+                    showSeckillModal.value = false;
+                };
+                
+                // 打开抢购弹窗时加载数据
+                const openSeckillModal = async () => {
+                    showSeckillModal.value = true;
+                    // 每次打开都重新加载最新数据
+                    if (isLoggedIn.value && userId.value) {
+                        await loadCountdownInfo();
+                    }
+                };
+                
+                // 从服务器获取抢购商品信息
+                const loadSeckillProduct = async () => {
+                    try {
+                        const response = await fetch(`${GAME_API_BASE}/api/seckill/product/${seckillProductId.value}`);
+                        const data = await response.json();
+                        
+                        if (data.code === 200) {
+                            const product = data.data;
+                            remainingStock.value = product.remainingStock;
+                            updateCountdownFromServer(product.intervalHours);
+                        }
+                    } catch (error) {
+                        console.error('获取商品信息失败:', error);
+                    }
+                };
+                
+                // 从服务器获取倒计时信息
+                const loadCountdownInfo = async () => {
+                    if (!isLoggedIn.value || !userId.value) {
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch(
+                            `${GAME_API_BASE}/api/seckill/countdown/${seckillProductId.value}?userId=${userId.value}`
+                        );
+                        const data = await response.json();
+                        
+                        if (data.code === 200) {
+                            const info = data.data;
+                            console.log('抢购倒计时信息:', info);
+                            countdownSeconds.value = info.remainingSeconds;
+                            hasParticipated.value = info.hasParticipated;
+                            remainingStock.value = info.remainingStock;
+                            console.log('更新后的库存:', remainingStock.value);
+                            updateCountdownDisplay();
+                        }
+                    } catch (error) {
+                        console.error('获取倒计时信息失败:', error);
+                    }
+                };
+                
+                // 从服务器计算下一次抢购时间
+                const updateCountdownFromServer = (intervalHours) => {
+                    const now = new Date();
+                    const hours = now.getHours();
+                    
+                    // 计算下一个整点时刻
+                    let nextHour = Math.floor(hours / intervalHours) * intervalHours + intervalHours;
+                    if (nextHour >= 24) {
+                        nextHour = 0;
+                    }
+                    
+                    const nextTime = new Date(now);
+                    nextTime.setHours(nextHour, 0, 0, 0);
+                    
+                    // 如果已经过了下一个时间点，设置为再下一个
+                    if (nextTime <= now) {
+                        nextTime.setHours(nextTime.getHours() + intervalHours);
+                    }
+                    
+                    nextSeckillTime.value = nextTime;
+                };
+                
+                // 更新倒计时显示
+                const updateCountdownDisplay = () => {
+                    if (countdownSeconds.value <= 0) {
+                        countdown.value = '00:00:00';
+                        return;
+                    }
+                    
+                    const hours = Math.floor(countdownSeconds.value / 3600);
+                    const minutes = Math.floor((countdownSeconds.value % 3600) / 60);
+                    const seconds = countdownSeconds.value % 60;
+                    
+                    countdown.value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                };
+                
+                // 检查是否应该显示倒计时
+                const shouldShowCountdown = computed(() => {
+                    return countdownSeconds.value > 0;
+                });
+                
+                // 处理抢购
+                const handleSeckill = async () => {
+                    if (!isLoggedIn.value) {
+                        message.error('请先登录');
+                        return;
+                    }
+                    
+                    if (points.value < 1) {
+                        message.error('积分不足 1 积分，无法参与抢购');
+                        return;
+                    }
+                    
+                    if (hasParticipated.value) {
+                        message.info('您已经参与过本次抢购了');
+                        return;
+                    }
+                    
+                    // 检查是否在抢购时间内（前后 1 分钟）
+                    if (countdownSeconds.value > 60) {
+                        message.error('不在抢购时间内，请等待倒计时结束');
+                        return;
+                    }
+                    
+                    seckillLoading.value = true;
+                    try {
+                        const response = await fetch(`${GAME_API_BASE}/api/seckill/participate`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token.value}`
+                            },
+                            body: JSON.stringify({
+                                productId: seckillProductId.value,
+                                userId: userId.value
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.code === 200) {
+                            const result = data.data;
+                            
+                            if (result.success) {
+                                // 抢购成功
+                                points.value -= 1;
+                                hasParticipated.value = true;
+                                remainingStock.value = result.remainingStock;
+                                message.success('🎉 恭喜！您成功抢到了 iPhone17ProMax！请在个人中心查看订单');
+                                closeSeckillModal();
+                            } else {
+                                // 抢购失败
+                                hasParticipated.value = result.hasParticipated;
+                                remainingStock.value = result.remainingStock;
+                                message.error(result.message || '😭 很遗憾，抢购失败，下次再接再厉！');
+                            }
+                        } else {
+                            message.error(data.message || '抢购失败');
+                        }
+                    } catch (error) {
+                        console.error('抢购错误:', error);
+                        message.error('抢购失败，请稍后重试');
+                    } finally {
+                        seckillLoading.value = false;
+                    }
+                };
+                
+                // 获取抢购按钮文本
+                const getSeckillButtonText = () => {
+                    if (seckillLoading.value) {
+                        return '抢购中...';
+                    }
+                    if (hasParticipated.value) {
+                        return '已参与';
+                    }
+                    if (remainingStock.value <= 0) {
+                        return '已售罄';
+                    }
+                    if (countdownSeconds.value > 60) {
+                        return '等待开抢';
+                    }
+                    return '立即抢购';
+                };
+                
+                // 跳转到兑换页面
+                const goToExchangePage = () => {
+                    window.open('exchange.html', '_blank');
+                };
+                
+                // 处理签到
+                const handleCheckIn = async () => {
+                    if (!isLoggedIn.value) {
+                        message.error('请先登录');
+                        return;
+                    }
+                    
+                    // 检查是否选择了大区
+                    if (!selectedRegion.value) {
+                        message.error('请先选择角色所在大区');
+                        return;
+                    }
+                    
+                    // 检查今天是否已经签到
+                    if (checkInStatus.value && checkInStatus.value.checkedInToday) {
+                        message.info('今日已签到，明天再来吧！');
+                        return;
+                    }
+                    
+                    checkInLoading.value = true;
+                    try {
+                        console.log('开始签到，用户 ID:', userId.value);
+                        console.log('Token:', token.value);
+                        console.log('请求地址:', `${GAME_API_BASE}/api/check-in`);
+                        
+                        const response = await fetch(`${GAME_API_BASE}/api/check-in`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token.value}`
+                            },
+                            body: JSON.stringify({
+                                userId: userId.value
+                            })
+                        });
+                        
+                        console.log('响应状态:', response.status);
+                        const data = await response.json();
+                        console.log('响应数据:', data);
+                        
+                        if (data.code === 200) {
+                            const result = data.data;
+                            let successMessage = result.message || '签到成功！';
+                            
+                            // 如果有额外奖励，添加到消息中
+                            if (result.bonusMessage) {
+                                successMessage += '\n' + result.bonusMessage;
+                            }
+                            
+                            message.success(successMessage);
+                            
+                            // 更新余额和积分
+                            balance.value = (balance.value || 0) + (result.rewardBalance || 0);
+                            points.value = (points.value || 0) + (result.rewardPoints || 0);
+                            
+                            // 更新签到状态
+                            checkInStatus.value = {
+                                checkedInToday: true,
+                                consecutiveDays: result.consecutiveDays || 0,
+                                nextBonusDays: result.nextBonusDays || 0
+                            };
+                            
+                            // 重新加载用户信息以确保数据一致
+                            await loadUserInfo();
+                        } else {
+                            message.error(data.message || '签到失败');
+                        }
+                    } catch (error) {
+                        console.error('签到错误:', error);
+                        message.error('签到失败，请稍后重试');
+                    } finally {
+                        checkInLoading.value = false;
+                    }
+                };
+                
+                // 加载签到状态
+                const loadCheckInStatus = async () => {
+                    if (!isLoggedIn.value || !userId.value) {
+                        checkInStatus.value = null;
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch(`${GAME_API_BASE}/api/check-in/status?userId=${userId.value}`, {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token.value}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.code === 200) {
+                                checkInStatus.value = data.data;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('获取签到状态失败:', error);
+                    }
+                };
+                
+                // 处理注销
+                const handleLogout = async () => {
+                    try {
+                        // 调用后端登出接口
+                        await fetch(`${AUTH_API_BASE}/api/auth/logout`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token.value}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        // 清除本地存储
+                        localStorage.removeItem('userInfo');
+                        localStorage.removeItem('token');
+                        
+                        // 重置用户状态
+                        token.value = '';
+                        username.value = '游客';
+                        userId.value = null;
+                        balance.value = 0;
+                        points.value = 0;
+                        isLoggedIn.value = false;
+                        selectedRegion.value = null;
+                        
+                        message.success('已安全退出');
+                    } catch (error) {
+                        console.error('退出错误:', error);
+                        // 即使后端请求失败，也清除本地数据
+                        localStorage.removeItem('userInfo');
+                        localStorage.removeItem('token');
+                        token.value = '';
+                        username.value = '游客';
+                        userId.value = null;
+                        balance.value = 0;
+                        points.value = 0;
+                        isLoggedIn.value = false;
+                        selectedRegion.value = null;
+                        message.success('已退出登录');
+                    }
+                };
+                
+                // 处理充值
+                const handleRecharge = async () => {
+                    if (!isLoggedIn.value) {
+                        message.error('请先登录');
+                        return;
+                    }
+                    
+                    // 检查是否选择了大区
+                    if (!selectedRegion.value) {
+                        message.error('请先选择角色所在大区');
+                        return;
+                    }
+                    
+                    rechargeLoading.value = true;
+                    try {
+                        console.log('开始充值，金额:', selectedRechargeAmount.value);
+                        console.log('Token:', token.value);
+                        console.log('请求地址:', `${GAME_API_BASE}/api/recharge`);
+                        
+                        const response = await fetch(`${GAME_API_BASE}/api/recharge`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token.value}`
+                            },
+                            body: JSON.stringify({
+                                amount: selectedRechargeAmount.value
+                            })
+                        });
+                        
+                        console.log('响应状态:', response.status);
+                        const data = await response.json();
+                        console.log('响应数据:', data);
+                        
+                        if (data.code === 200) {
+                            message.success(`充值成功！已到账 ￥${selectedRechargeAmount.value}，获得 ${Math.floor(selectedRechargeAmount.value * 10)} 积分`);
+                            closeRechargeModal();
+                            // 重新加载用户信息
+                            await loadUserInfo();
+                        } else {
+                            message.error(data.message || '充值失败');
+                        }
+                    } catch (error) {
+                        console.error('充值错误:', error);
+                        message.error('充值失败，请稍后重试');
+                    } finally {
+                        rechargeLoading.value = false;
+                    }
+                };
+                
+                // 单抽
+                const singleDraw = async () => {
+                    if (!isLoggedIn.value) {
+                        showLoginModal.value = true;
+                        return;
+                    }
+                    
+                    // 检查是否选择了大区
+                    if (!selectedRegion.value) {
+                        message.error('请先选择角色所在大区');
+                        return;
+                    }
+                    
+                    if (balance.value < 10) {
+                        message.error('余额不足');
+                        return;
+                    }
+                    
+                    loading.value = true;
+                    try {
+                        // 调用后端抽奖接口
+                        const response = await fetch(`${GACHA_API_BASE}/api/gacha/draw`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token.value}`
+                            },
+                            body: JSON.stringify({
+                                userId: userId.value,
+                                drawCount: 1
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        console.log('抽奖响应:', data);
+                        
+                        if (data.code === 200) {
+                            // 更新余额和积分
+                            balance.value = data.data.newBalance;
+                            points.value = data.data.newPointsBalance;
+                            
+                            // 显示结果
+                            drawResults.value = data.data.results.map(r => ({
+                                name: r.itemName,
+                                rarity: r.rarityLevel,
+                                icon: getRarityIcon(r.rarityLevel)
+                            }));
+                            
+                            // 添加到记录
+                            data.data.results.forEach(result => {
+                                records.value.unshift({
+                                    time: new Date().toLocaleString(),
+                                    type: 'single',
+                                    itemName: result.itemName,
+                                    rarity: result.rarityLevel,
+                                    cost: 10
+                                });
+                            });
+                            
+                            showResultModal.value = true;
+                            message.success('抽奖成功！');
+                        } else {
+                            message.error(data.message || '抽奖失败');
+                        }
+                    } catch (error) {
+                        console.error('抽奖错误:', error);
+                        message.error('抽奖失败，请稍后重试');
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+                
+                // 十连抽
+                const tenDraw = async () => {
+                    if (!isLoggedIn.value) {
+                        showLoginModal.value = true;
+                        return;
+                    }
+                    
+                    // 检查是否选择了大区
+                    if (!selectedRegion.value) {
+                        message.error('请先选择角色所在大区');
+                        return;
+                    }
+                    
+                    if (balance.value < 100) {
+                        message.error('余额不足');
+                        return;
+                    }
+                    
+                    loading.value = true;
+                    try {
+                        // 调用后端抽奖接口
+                        const response = await fetch(`${GACHA_API_BASE}/api/gacha/draw`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token.value}`
+                            },
+                            body: JSON.stringify({
+                                userId: userId.value,
+                                drawCount: 10
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        console.log('十连抽响应:', data);
+                        
+                        if (data.code === 200) {
+                            // 更新余额和积分
+                            balance.value = data.data.newBalance;
+                            points.value = data.data.newPointsBalance;
+                            
+                            // 显示结果
+                            drawResults.value = data.data.results.map(r => ({
+                                name: r.itemName,
+                                rarity: r.rarityLevel,
+                                icon: getRarityIcon(r.rarityLevel)
+                            }));
+                            
+                            // 添加到记录
+                            data.data.results.forEach(result => {
+                                records.value.unshift({
+                                    time: new Date().toLocaleString(),
+                                    type: 'ten',
+                                    itemName: result.itemName,
+                                    rarity: result.rarityLevel,
+                                    cost: 10
+                                });
+                            });
+                            
+                            showResultModal.value = true;
+                            message.success('十连抽成功！');
+                        } else {
+                            message.error(data.message || '抽奖失败');
+                        }
+                    } catch (error) {
+                        console.error('抽奖错误:', error);
+                        message.error('抽奖失败，请稍后重试');
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+                
+                // 生成抽奖结果
+                const generateDrawResult = () => {
+                    const items = [
+                        { name: 'SSR 稀有角色', rarity: 5, icon: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=anime%20character%20with%20glowing%20aura%20SSR%20rarity&image_size=square' },
+                        { name: 'SR 高级角色', rarity: 4, icon: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=anime%20character%20SR%20rarity&image_size=square' },
+                        { name: 'R 普通角色', rarity: 3, icon: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=anime%20character%20R%20rarity&image_size=square' }
+                    ];
+                    
+                    // 概率设置
+                    const rand = Math.random();
+                    if (rand < 0.05) {
+                        return items[0]; // 5% SSR
+                    } else if (rand < 0.3) {
+                        return items[1]; // 25% SR
+                    } else {
+                        return items[2]; // 70% R
+                    }
+                };
+                
+                // 处理登录
+                const handleLogin = async () => {
+                    if (!loginForm.value.username || !loginForm.value.password) {
+                        message.error('请填写用户名和密码');
+                        return;
+                    }
+                    
+                    loginLoading.value = true;
+                    try {
+                        const response = await fetch(`${AUTH_API_BASE}/api/auth/login`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                username: loginForm.value.username,
+                                password: loginForm.value.password
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.code === 200) {
+                            // 保存用户信息到 localStorage
+                            const userInfo = {
+                                id: data.data.userId,
+                                username: data.data.username,
+                                token: data.data.token,
+                                balance: data.data.balance,
+                                points: data.data.points
+                            };
+                            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                            localStorage.setItem('token', data.data.token);
+                            
+                            // 更新用户信息
+                            token.value = data.data.token;
+                            username.value = data.data.username;
+                            userId.value = data.data.userId;
+                            balance.value = data.data.balance || 0;
+                            points.value = data.data.points || 0;
+                            isLoggedIn.value = true;
+                            
+                            message.success('登录成功！');
+                            closeLoginModal();
+                        } else {
+                            message.error(data.message || '登录失败');
+                        }
+                    } catch (error) {
+                        console.error('登录错误:', error);
+                        message.error('登录失败，请稍后重试');
+                    } finally {
+                        loginLoading.value = false;
+                    }
+                };
+                
+                // 处理注册
+                const handleRegister = async () => {
+                    registerGlobalError.value = '';
+                    
+                    // 验证表单
+                    if (!validateRegisterUsername()) {
+                        return;
+                    }
+                    
+                    if (!validateRegisterPassword()) {
+                        return;
+                    }
+                    
+                    if (!validateConfirmPassword()) {
+                        return;
+                    }
+                    
+                    registerLoading.value = true;
+                    try {
+                        const response = await fetch(`${AUTH_API_BASE}/api/auth/register/body`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                username: registerForm.value.username.trim(),
+                                password: registerForm.value.password,
+                                confirmPassword: registerForm.value.confirmPassword
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.code === 200) {
+                            message.success('注册成功！赠送 1000 积分已到账，请登录');
+                            closeRegisterModal();
+                            showLoginModal.value = true;
+                        } else {
+                            registerGlobalError.value = data.message || '注册失败';
+                            message.error(data.message || '注册失败');
+                        }
+                    } catch (error) {
+                        console.error('注册错误:', error);
+                        registerGlobalError.value = '网络错误，请稍后重试';
+                        message.error('注册失败，请稍后重试');
+                    } finally {
+                        registerLoading.value = false;
+                    }
+                };
+                
+                // 加载用户信息
+                const loadUserInfo = async () => {
+                    // 从 localStorage 获取用户信息
+                    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                    const savedToken = localStorage.getItem('token');
+                    
+                    if (savedToken) {
+                        token.value = savedToken;
+                        try {
+                            // 调用后端获取用户信息
+                            const response = await fetch(`${AUTH_API_BASE}/api/auth/info`, {
+                                method: 'GET',
+                                headers: {
+                                    'Authorization': `Bearer ${savedToken}`,
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                const data = await response.json();
+                                if (data.code === 200) {
+                                    username.value = data.data.username || '游客';
+                                    userId.value = data.data.id;
+                                    balance.value = data.data.balance || 0;
+                                    points.value = data.data.points || 0;
+                                    isLoggedIn.value = true;
+                                    // 加载签到状态
+                                    await loadCheckInStatus();
+                                    return;
+                                }
+                            }
+                        } catch (error) {
+                            console.error('获取用户信息失败:', error);
+                        }
+                    }
+                    
+                    // 重置登录状态
+                    isLoggedIn.value = false;
+                    username.value = '游客';
+                    userId.value = null;
+                    balance.value = 0;
+                    points.value = 0;
+                    checkInStatus.value = null;
+                    // 不再自动跳转到登录页，而是显示登录按钮
+                };
+                
+                onMounted(() => {
+                    loadUserInfo();
+                    // 初始化抢购信息
+                    if (isLoggedIn.value && userId.value) {
+                        loadCountdownInfo();
+                    }
+                    // 每秒更新一次倒计时和状态
+                    setInterval(() => {
+                        if (countdownSeconds.value > 0) {
+                            countdownSeconds.value--;
+                            updateCountdownDisplay();
+                        } else {
+                            // 倒计时结束，重新从服务器加载
+                            if (isLoggedIn.value && userId.value) {
+                                loadCountdownInfo();
+                            }
+                        }
+                    }, 1000);
+                });
+                
+                return {
+                    isLoggedIn,
+                    showLoginModal,
+                    showRegisterModal,
+                    showRechargeModal,
+                    showSeckillModal,
+                    openSeckillModal,
+                    loginLoading,
+                    registerLoading,
+                    rechargeLoading,
+                    checkInLoading,
+                    seckillLoading,
+                    loading,
+                    loadingText,
+                    loginForm,
+                    registerForm,
+                    registerFormErrors,
+                    registerGlobalError,
+                    loginRules,
+                    registerRules,
+                    displayName,
+                    displayBalance,
+                    displayPoints,
+                    checkInButtonText,
+                    closeLoginModal,
+                    closeRegisterModal,
+                    closeRechargeModal,
+                    handleLogin,
+                    handleRegister,
+                    handleRecharge,
+                    handleCheckIn,
+                    handleSeckill,
+                    getSeckillButtonText,
+                    shouldShowCountdown,
+                    handleLogout,
+                    goToExchangePage,
+                    username,
+                    balance,
+                    points,
+                    selectedRegion,
+                    regionOptions,
+                    rechargeOptions,
+                    selectedRechargeAmount,
+                    countdown,
+                    canParticipate,
+                    hasParticipated,
+                    remainingStock,
+                    showResultModal,
+                    drawResults,
+                    records,
+                    recentRecords,
+                    columns,
+                    pagination,
+                    theme,
+                    onRegionChange,
+                    singleDraw,
+                    tenDraw,
+                    getRarityText,
+                    getRarityClass,
+                    getRarityColor,
+                    canSubmitRegister
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

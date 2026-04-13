@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-04-08T13:17:54.405Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36" etag="mXaWXaWXaWXaWXaWXaWXaWXaW" version="20.8.24" type="device">
+  <diagram id="4Q6D5fXfXfXfXfXfXfXf" name="Gacha System Architecture">
+    <mxGraphModel dx="1280" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- 前端层 -->
+        <mxCell id="2" value="前端层" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4a90e2;strokeColor=#357abd;fontColor=#ffffff;align=center;verticalAlign=middle;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="50" width="400" height="100" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="3" value="React 前端应用\n(游戏商城)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#61dafb;strokeColor=#48b5e8;fontColor=#000000;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="150" y="170" width="300" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- 后端微服务层 -->
+        <mxCell id="4" value="后端微服务层" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#50e3c2;strokeColor=#3bc4a7;fontColor=#000000;align=center;verticalAlign=middle;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="50" width="500" height="100" as="geometry" />
+        </mxCell>
+        
+        <!-- 认证服务 -->
+        <mxCell id="5" value="认证服务\n(auth-service)\n端口: 8084" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5a623;strokeColor=#d48806;fontColor=#000000;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="650" y="170" width="200" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- 游戏服务 -->
+        <mxCell id="6" value="游戏服务\n(game-service)\n端口: 8082" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7ed321;strokeColor=#67b017;fontColor=#000000;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="870" y="170" width="200" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- 抽奖服务 -->
+        <mxCell id="7" value="抽奖服务\n(gacha-service)\n端口: 8083" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bd10e0;strokeColor=#9a0dae;fontColor=#ffffff;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="650" y="270" width="200" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- 公共模块 -->
+        <mxCell id="8" value="公共模块\n(common)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#9013fe;strokeColor=#7700cc;fontColor=#ffffff;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="870" y="270" width="200" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- 数据库层 -->
+        <mxCell id="9" value="数据库层" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8e71c;strokeColor=#e6c200;fontColor=#000000;align=center;verticalAlign=middle;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="400" width="500" height="100" as="geometry" />
+        </mxCell>
+        
+        <!-- MySQL数据库 -->
+        <mxCell id="10" value="MySQL数据库\n(gacha_system)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00758f;strokeColor=#005a70;fontColor=#ffffff;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="400" y="520" width="400" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- Redis缓存 -->
+        <mxCell id="11" value="Redis缓存" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d82c20;strokeColor=#b51d13;fontColor=#ffffff;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="400" y="620" width="400" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- 连接关系 -->
+        <mxCell id="12" value="" style="endArrow=classic;html=1;" edge="1" parent="1" source="3" target="5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="" style="endArrow=classic;html=1;" edge="1" parent="1" source="3" target="6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="" style="endArrow=classic;html=1;" edge="1" parent="1" source="3" target="7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="15" value="" style="endArrow=classic;html=1;" edge="1" parent="1" source="5" target="8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="16" value="" style="endArrow=classic;html=1;" edge="1" parent="1" source="6" target="8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="17" value="" style="endArrow=classic;html=1;" edge="1" parent="1" source="7" target="8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="18" value="" style="endArrow=classic;html=1;" edge="1" parent="1" source="8" target="10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="19" value="" style="endArrow=classic;html=1;" edge="1" parent="1" source="6" target="11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- 服务功能说明 -->
+        <mxCell id="20" value="认证服务功能:\n• 用户注册/登录\n• JWT Token管理\n• 用户信息管理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5a623;strokeColor=#d48806;fontColor=#000000;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="100" y="270" width="250" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="21" value="游戏服务功能:\n• 签到功能\n• 积分管理\n• 充值系统\n• 兑换系统" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7ed321;strokeColor=#67b017;fontColor=#000000;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="100" y="410" width="250" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="22" value="抽奖服务功能:\n• 抽奖配置管理\n• 抽奖逻辑处理\n• 抽奖记录管理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bd10e0;strokeColor=#9a0dae;fontColor=#ffffff;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="100" y="550" width="250" height="120" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

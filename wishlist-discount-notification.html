@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>愿望单折扣通知 - 管理员</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #0c5460;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 愿望单折扣通知</h1>
+        <p class="subtitle">向愿望单用户发送游戏折扣邮件</p>
+
+        <div class="info-box">
+            💡 提示：系统会自动检测游戏折扣，并向愿望单中该游戏的用户发送精美的HTML格式邮件通知。
+        </div>
+
+        <div class="warning-box">
+            ⚠️ 注意：此功能需要后端支持，目前通过修改游戏价格自动触发。如需手动测试，请联系开发人员。
+        </div>
+
+        <form id="discountForm">
+            <div class="form-group">
+                <label for="gameId">游戏ID *</label>
+                <input 
+                    type="number" 
+                    id="gameId" 
+                    name="gameId" 
+                    placeholder="例如：1（黑神话:悟空）"
+                    required
+                    min="1"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="oldPrice">原价（元）*</label>
+                <input 
+                    type="number" 
+                    id="oldPrice" 
+                    name="oldPrice" 
+                    placeholder="例如：298.00"
+                    required
+                    step="0.01"
+                    min="0"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="newPrice">现价（元）*</label>
+                <input 
+                    type="number" 
+                    id="newPrice" 
+                    name="newPrice" 
+                    placeholder="例如：198.00"
+                    required
+                    step="0.01"
+                    min="0"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="discountRate">折扣率（%）*</label>
+                <input 
+                    type="number" 
+                    id="discountRate" 
+                    name="discountRate" 
+                    placeholder="例如：33（表示33%折扣）"
+                    required
+                    min="0"
+                    max="100"
+                >
+            </div>
+
+            <div class="btn-group">
+                <button type="submit" class="btn-primary" id="sendBtn">
+                    📧 发送折扣通知
+                </button>
+                <button type="button" class="btn-secondary" onclick="resetForm()">
+                    重置
+                </button>
+            </div>
+        </form>
+
+        <div id="result" class="result"></div>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+            <h3 style="color: #333; margin-bottom: 15px;">📋 使用说明</h3>
+            <ol style="color: #666; line-height: 1.8; padding-left: 20px;">
+                <li>填写游戏ID、原价、现价和折扣率</li>
+                <li>点击"发送折扣通知"按钮</li>
+                <li>系统会查找所有将该游戏加入愿望单的用户</li>
+                <li>向这些用户发送精美的Steam风格HTML邮件</li>
+                <li>邮件中包含游戏信息、价格对比和购买链接</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://111.228.12.167/api';  // 线上地址
+
+        // 自动计算函数
+        function calculateNewPrice() {
+            const oldPrice = parseFloat(document.getElementById('oldPrice').value);
+            const discountRate = parseFloat(document.getElementById('discountRate').value);
+            
+            if (oldPrice && discountRate !== undefined && discountRate !== '') {
+                // 根据原价和折扣率计算现价
+                const newPrice = (oldPrice * (100 - discountRate) / 100).toFixed(2);
+                document.getElementById('newPrice').value = newPrice;
+            }
+        }
+
+        function calculateDiscountRate() {
+            const oldPrice = parseFloat(document.getElementById('oldPrice').value);
+            const newPrice = parseFloat(document.getElementById('newPrice').value);
+            
+            if (oldPrice && newPrice && oldPrice > 0) {
+                // 根据原价和现价计算折扣率
+                const discountRate = Math.round((1 - newPrice / oldPrice) * 100);
+                document.getElementById('discountRate').value = discountRate;
+            }
+        }
+
+        // 监听输入事件
+        document.getElementById('oldPrice').addEventListener('input', function() {
+            const discountRate = document.getElementById('discountRate').value;
+            const newPrice = document.getElementById('newPrice').value;
+            
+            // 如果折扣率已填,计算现价;否则如果现价已填,计算折扣率
+            if (discountRate) {
+                calculateNewPrice();
+            } else if (newPrice) {
+                calculateDiscountRate();
+            }
+        });
+
+        document.getElementById('discountRate').addEventListener('input', function() {
+            calculateNewPrice();
+        });
+
+        document.getElementById('newPrice').addEventListener('input', function() {
+            calculateDiscountRate();
+        });
+
+        document.getElementById('discountForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const gameId = document.getElementById('gameId').value;
+            const oldPrice = document.getElementById('oldPrice').value;
+            const newPrice = document.getElementById('newPrice').value;
+            const discountRate = document.getElementById('discountRate').value;
+            const sendBtn = document.getElementById('sendBtn');
+            const resultDiv = document.getElementById('result');
+
+            // 验证
+            if (!gameId || !oldPrice || !newPrice || !discountRate) {
+                showResult('请填写所有必填字段', 'error');
+                return;
+            }
+
+            // 禁用按钮
+            sendBtn.disabled = true;
+            sendBtn.textContent = '发送中...';
+            resultDiv.className = 'result';
+            resultDiv.style.display = 'none';
+
+            try {
+                // 注意：这个接口需要后端实现
+                // 目前可以通过直接调用 EmailNotificationService.sendDiscountNotification() 来测试
+                const requestData = {
+                    gameId: parseInt(gameId),
+                    oldPrice: parseFloat(oldPrice),
+                    newPrice: parseFloat(newPrice),
+                    discountRate: parseInt(discountRate)
+                };
+
+                // TODO: 后端需要提供这个接口
+                const response = await fetch(API_BASE + '/admin/notifications/send-discount-notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+
+                if (data.code === 200) {
+                    showResult('✅ ' + data.message, 'success');
+                    resetForm();
+                } else {
+                    showResult('❌ ' + (data.message || '发送失败'), 'error');
+                }
+            } catch (error) {
+                console.error('发送失败:', error);
+                showResult('❌ 网络错误：' + error.message + '<br><br>💡 提示：后端接口尚未实现，请使用其他方式测试', 'error');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = '📧 发送折扣通知';
+            }
+        });
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = message;
+            resultDiv.className = 'result ' + type;
+        }
+
+        function resetForm() {
+            document.getElementById('discountForm').reset();
+            document.getElementById('result').className = 'result';
+            document.getElementById('result').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

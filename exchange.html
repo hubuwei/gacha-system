@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>积分兑换商城</title>
+    <!-- 引入 Vue 3 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .welcome-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .points-display {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+        }
+        
+        .back-button {
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+        }
+        
+        .my-orders-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+        
+        .my-orders-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .page-title {
+            text-align: center;
+            color: white;
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .page-subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+        
+        /* 金字塔布局 */
+        .pyramid-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+        
+        .pyramid-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+        }
+        
+        /* 物品卡片 */
+        .item-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            width: 280px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .item-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+        }
+        
+        .item-card.disabled {
+            opacity: 0.6;
+            filter: grayscale(0.5);
+        }
+        
+        .item-card.disabled:hover {
+            transform: none;
+        }
+        
+        /* 稀有度标识 */
+        .rarity-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .rarity-ssr {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+        }
+        
+        .rarity-sr {
+            background: linear-gradient(135deg, #a855f7, #9333ea);
+            box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);
+        }
+        
+        .rarity-r {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+        
+        .item-icon {
+            width: 100%;
+            height: 180px;
+            object-fit: contain;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 10px;
+        }
+        
+        .item-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .item-description {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+            height: 42px;
+            overflow: hidden;
+        }
+        
+        .item-points {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f5576c;
+            margin-bottom: 10px;
+        }
+        
+        .item-stock {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .exchange-button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .exchange-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .exchange-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: white;
+            font-size: 20px;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            color: #666;
+        }
+        
+        /* 模态框样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .orders-modal {
+            max-width: 900px;
+        }
+        
+        .order-item {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+        
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        
+        .order-icon {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 10px;
+        }
+        
+        .order-info {
+            flex: 1;
+        }
+        
+        .order-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .order-points {
+            color: #f5576c;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .order-address {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .order-status {
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-pending {
+            background: linear-gradient(135deg, #ffd700, #ffa500);
+            color: white;
+        }
+        
+        .status-shipped {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+        }
+        
+        .status-delivered {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            color: white;
+        }
+        
+        .order-date {
+            color: #999;
+            font-size: 13px;
+            min-width: 120px;
+            text-align: right;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            color: #333;
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .address-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .confirm-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .confirm-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .confirm-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .page-title {
+                font-size: 28px;
+            }
+            
+            .pyramid-row {
+                flex-wrap: wrap;
+            }
+            
+            .item-card {
+                width: calc(50% - 10px);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .item-card {
+                width: 100%;
+            }
+            
+            .address-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 顶部导航 -->
+        <header class="header">
+            <div class="user-info">
+                <span class="welcome-text">👋 欢迎，{{ username }}</span>
+                <span class="points-display">⭐ 当前积分：{{ points }}</span>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="my-orders-btn" @click="openMyOrdersModal()">📦 我的兑换</button>
+                <button class="back-button" @click="goBack()">← 返回抽奖页</button>
+            </div>
+        </header>
+        
+        <!-- 主内容区 -->
+        <div class="container">
+            <h1 class="page-title">🎁 积分兑换商城</h1>
+            <p class="page-subtitle">每日 0 点刷新库存，先到先得！</p>
+            
+            <!-- 加载中 -->
+            <div v-if="loading" class="loading">
+                <div class="loading-spinner"></div>
+                <p>正在加载商品...</p>
+            </div>
+            
+            <!-- 商品列表（金字塔布局） -->
+            <div v-else-if="items.length > 0" class="pyramid-container">
+                <!-- 按积分从高到低分组显示 -->
+                <div v-for="(row, rowIndex) in pyramidRows" :key="rowIndex" class="pyramid-row">
+                    <div 
+                        v-for="item in row" 
+                        :key="item.id" 
+                        class="item-card"
+                        :class="{ disabled: !canExchange(item) }"
+                    >
+                        <span :class="['rarity-badge', getRarityClass(item)]">
+                            {{ getRarityText(item) }}
+                        </span>
+                        
+                        <img :src="item.iconUrl || getDefaultIcon(item)" class="item-icon" :alt="item.name" loading="lazy" />
+                        
+                        <h3 class="item-name">{{ item.name }}</h3>
+                        <p class="item-description">{{ item.description }}</p>
+                        
+                        <div class="item-points">{{ item.requiredPoints }} 积分</div>
+                        <div class="item-stock">
+                            库存：{{ item.currentStock }} / {{ item.totalStock }}
+                        </div>
+                        
+                        <button 
+                            class="exchange-button"
+                            @click="openExchangeModal(item)"
+                            :disabled="!canExchange(item)"
+                        >
+                            {{ getButtonText(item) }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 空状态 -->
+            <div v-else class="empty-state">
+                <p style="font-size: 18px;">😢 暂无可兑换商品</p>
+                <p style="margin-top: 10px;">请稍后再来查看</p>
+            </div>
+        </div>
+        
+        <!-- 兑换确认弹窗 -->
+        <div v-if="showModal" class="modal-overlay" @click="closeModal">
+            <div class="modal-content" @click.stop>
+                <div class="modal-header">
+                    <h2 style="font-size: 24px; font-weight: bold;">🛒 确认兑换</h2>
+                    <button type="button" class="modal-close" @click="closeModal">×</button>
+                </div>
+                                
+                <div class="modal-body">
+                    <!-- 商品信息 -->
+                    <div v-if="selectedItem" style="text-align: center; margin-bottom: 25px;">
+                        <img :src="selectedItem.iconUrl || getDefaultIcon(selectedItem)" 
+                             style="width: 120px; height: 120px; object-fit: contain; border-radius: 10px; background: #f5f7fa; padding: 10px;" 
+                             :alt="selectedItem.name" 
+                        />
+                        <h3 style="margin: 15px 0 10px; font-size: 22px;">{{ selectedItem.name }}</h3>
+                        <p style="color: #f5576c; font-size: 24px; font-weight: bold;">
+                            {{ selectedItem.requiredPoints }} 积分
+                        </p>
+                        <p style="color: #666; font-size: 14px;">
+                            库存：{{ selectedItem.currentStock }}
+                        </p>
+                    </div>
+                                    
+                    <!-- 收货地址表单 -->
+                    <div class="form-group">
+                        <label>收货人姓名 *</label>
+                        <input 
+                            v-model="addressForm.recipientName"
+                            type="text"
+                            class="form-input"
+                            placeholder="请输入收货人姓名"
+                        />
+                    </div>
+                                    
+                    <div class="form-group">
+                        <label>联系电话 *</label>
+                        <input 
+                            v-model="addressForm.phoneNumber"
+                            type="tel"
+                            class="form-input"
+                            placeholder="请输入手机号码"
+                            maxlength="11"
+                        />
+                    </div>
+                                    
+                    <div class="address-grid">
+                        <div class="form-group">
+                            <label>省份 *</label>
+                            <input 
+                                v-model="addressForm.province"
+                                type="text"
+                                class="form-input"
+                                placeholder="例如：广东省"
+                            />
+                        </div>
+                                        
+                        <div class="form-group">
+                            <label>城市 *</label>
+                            <input 
+                                v-model="addressForm.city"
+                                type="text"
+                                class="form-input"
+                                placeholder="例如：深圳市"
+                            />
+                        </div>
+                    </div>
+                                    
+                    <div class="address-grid">
+                        <div class="form-group">
+                            <label>区县 *</label>
+                            <input 
+                                v-model="addressForm.district"
+                                type="text"
+                                class="form-input"
+                                placeholder="例如：南山区"
+                            />
+                        </div>
+                                        
+                        <div class="form-group">
+                            <label>详细地址 *</label>
+                            <input 
+                                v-model="addressForm.detailAddress"
+                                type="text"
+                                class="form-input"
+                                placeholder="街道、小区、门牌号等"
+                            />
+                        </div>
+                    </div>
+                                    
+                    <button 
+                        class="confirm-button"
+                        @click="confirmExchange"
+                        :disabled="exchangeLoading || !isAddressFormValid"
+                    >
+                        {{ exchangeLoading ? '兑换中...' : '确认兑换' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+                        
+        <!-- 我的兑换记录弹窗 -->
+        <div v-if="showOrdersModal" class="modal-overlay" @click="closeOrdersModal">
+            <div class="modal-content orders-modal" @click.stop>
+                <div class="modal-header">
+                    <h2 style="font-size: 24px; font-weight: bold;">📦 我的兑换记录</h2>
+                    <button type="button" class="modal-close" @click="closeOrdersModal">×</button>
+                </div>
+                                
+                <div class="modal-body">
+                    <!-- 加载中 -->
+                    <div v-if="ordersLoading" class="loading" style="padding: 40px;">
+                        <div class="loading-spinner"></div>
+                        <p>正在加载兑换记录...</p>
+                    </div>
+                                    
+                    <!-- 兑换记录列表 -->
+                    <div v-else-if="exchangeRecords.length > 0">
+                        <div v-for="record in exchangeRecords" :key="record.id" class="order-item">
+                            <img :src="record.itemIconUrl || getDefaultIcon({name: record.itemName})" 
+                                 class="order-icon" 
+                                 :alt="record.itemName"
+                            />
+                                            
+                            <div class="order-info">
+                                <div class="order-name">{{ record.itemName }}</div>
+                                <div class="order-points">{{ record.pointsCost }} 积分</div>
+                                <div class="order-address">
+                                    📍 {{ record.fullAddress }}<br/>
+                                    📞 {{ record.phoneNumber }} - {{ record.recipientName }}
+                                </div>
+                            </div>
+                                            
+                            <div class="order-status">
+                                <span :class="['status-badge', getStatusClass(record.status)]">
+                                    {{ getStatusText(record.status) }}
+                                </span>
+                            </div>
+                                            
+                            <div class="order-date">
+                                {{ formatDate(record.createdAt) }}
+                            </div>
+                        </div>
+                    </div>
+                                    
+                    <!-- 空状态 -->
+                    <div v-else class="empty-state">
+                        <p style="font-size: 18px;">😢 暂无兑换记录</p>
+                        <p style="margin-top: 10px;">快去兑换心仪的礼品吧！</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+        
+        // message 函数
+        const message = {
+            success: (text) => alert('成功：' + text),
+            error: (text) => alert('错误：' + text),
+            info: (text) => alert(text)
+        };
+        
+        createApp({
+            setup() {
+                const AUTH_API_BASE = 'http://localhost:8081';    // 认证服务
+                const GAME_API_BASE = 'http://localhost:8082';    // 游戏服务（兑换、积分）
+                
+                // 用户信息
+                const username = ref('');
+                const points = ref(0);
+                const userId = ref(null);
+                const token = ref(localStorage.getItem('token') || '');
+                
+                // 商品列表
+                const items = ref([]);
+                const loading = ref(true);
+                
+                // 弹窗相关
+                const showModal = ref(false);
+                const selectedItem = ref(null);
+                const exchangeLoading = ref(false);
+                
+                // 地址表单
+                const addressForm = ref({
+                    recipientName: '',
+                    phoneNumber: '',
+                    province: '',
+                    city: '',
+                    district: '',
+                    detailAddress: ''
+                });
+                
+                // 兑换记录
+                const exchangeRecords = ref([]);
+                const showOrdersModal = ref(false);
+                const ordersLoading = ref(false);
+                
+                // 加载用户信息
+                const loadUserInfo = async () => {
+                    try {
+                        const response = await fetch(`${AUTH_API_BASE}/api/auth/info`, {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token.value}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.code === 200) {
+                                username.value = data.data.username || '';
+                                userId.value = data.data.id;
+                                points.value = data.data.points || 0;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('获取用户信息失败:', error);
+                    }
+                };
+                
+                // 加载商品列表
+                const loadItems = async () => {
+                    loading.value = true;
+                    try {
+                        const response = await fetch(`${GAME_API_BASE}/api/exchange/items`, {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token.value}`
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.code === 200) {
+                                items.value = data.data || [];
+                            }
+                        }
+                    } catch (error) {
+                        console.error('加载商品失败:', error);
+                        message.error('加载商品失败');
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+                
+                // 金字塔分组（按积分从高到低）
+                const pyramidRows = computed(() => {
+                    // 先按积分降序排序
+                    const sorted = [...items.value].sort((a, b) => b.requiredPoints - a.requiredPoints);
+                    
+                    // 分组：第一行 1 个，第二行 2 个，第三行 3 个...
+                    const rows = [];
+                    let index = 0;
+                    let rowSize = 1;
+                    
+                    while (index < sorted.length) {
+                        const row = sorted.slice(index, index + rowSize);
+                        if (row.length > 0) {
+                            rows.push(row);
+                        }
+                        index += rowSize;
+                        rowSize++; // 每行递增一个
+                    }
+                    
+                    return rows;
+                });
+                
+                // 判断是否可以兑换
+                const canExchange = (item) => {
+                    return item.enabled && 
+                           item.currentStock > 0 && 
+                           points.value >= item.requiredPoints;
+                };
+                
+                // 获取按钮文本
+                const getButtonText = (item) => {
+                    if (!item.enabled) {
+                        return '已下架';
+                    }
+                    if (item.currentStock <= 0) {
+                        return '已售罄';
+                    }
+                    if (points.value < item.requiredPoints) {
+                        return '积分不足';
+                    }
+                    return '立即兑换';
+                };
+                
+                // 获取稀有度等级
+                const getRarityClass = (item) => {
+                    const ratio = item.requiredPoints / 80000; // 相对于最贵物品的比例
+                    if (ratio >= 0.6) return 'rarity-ssr';
+                    if (ratio >= 0.3) return 'rarity-sr';
+                    return 'rarity-r';
+                };
+                
+                const getRarityText = (item) => {
+                    const ratio = item.requiredPoints / 80000;
+                    if (ratio >= 0.6) return 'SSR';
+                    if (ratio >= 0.3) return 'SR';
+                    return 'R';
+                };
+                
+                // 默认图标
+                const getDefaultIcon = (item) => {
+                    const icons = {
+                        '显卡': 'https://via.placeholder.com/200?text=GPU',
+                        '手机': 'https://via.placeholder.com/200?text=Phone',
+                        '键盘': 'https://via.placeholder.com/200?text=Keyboard',
+                        '鼠标': 'https://via.placeholder.com/200?text=Mouse',
+                        '耳机': 'https://via.placeholder.com/200?text=Headset'
+                    };
+                    
+                    for (const [keyword, icon] of Object.entries(icons)) {
+                        if (item.name.includes(keyword)) {
+                            return icon;
+                        }
+                    }
+                    
+                    return 'https://via.placeholder.com/200?text=Gift';
+                };
+                
+                // 打开兑换弹窗
+                const openExchangeModal = (item) => {
+                    if (!canExchange(item)) {
+                        return;
+                    }
+                    
+                    selectedItem.value = item;
+                    showModal.value = true;
+                    
+                    // 尝试加载用户历史地址
+                    loadUserAddress();
+                };
+                
+                // 加载用户历史地址
+                const loadUserAddress = async () => {
+                    try {
+                        const response = await fetch(`${GAME_API_BASE}/api/user/address`, {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token.value}`
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.code === 200 && data.data) {
+                                addressForm.value = { ...data.data };
+                            }
+                        }
+                    } catch (error) {
+                        console.error('加载地址失败:', error);
+                    }
+                };
+                
+                // 关闭弹窗
+                const closeModal = () => {
+                    showModal.value = false;
+                    selectedItem.value = null;
+                    addressForm.value = {
+                        recipientName: '',
+                        phoneNumber: '',
+                        province: '',
+                        city: '',
+                        district: '',
+                        detailAddress: ''
+                    };
+                };
+                
+                // 验证地址表单
+                const isAddressFormValid = computed(() => {
+                    const form = addressForm.value;
+                    return form.recipientName && 
+                           form.phoneNumber && 
+                           form.province && 
+                           form.city && 
+                           form.district && 
+                           form.detailAddress;
+                });
+                
+                // 确认兑换
+                const confirmExchange = async () => {
+                    if (!isAddressFormValid.value) {
+                        message.error('请填写完整的收货地址');
+                        return;
+                    }
+                    
+                    exchangeLoading.value = true;
+                    
+                    try {
+                        // 第一步：执行兑换
+                        const exchangeResponse = await fetch(`${GAME_API_BASE}/api/exchange`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token.value}`
+                            },
+                            body: JSON.stringify({
+                                itemId: selectedItem.value.id
+                            })
+                        });
+                        
+                        const exchangeData = await exchangeResponse.json();
+                        
+                        if (exchangeData.code !== 200) {
+                            throw new Error(exchangeData.message || '兑换失败');
+                        }
+                        
+                        const recordId = exchangeData.data.id;
+                        
+                        // 第二步：保存收货地址
+                        const addressResponse = await fetch(`${GAME_API_BASE}/api/exchange/address`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token.value}`
+                            },
+                            body: JSON.stringify({
+                                exchangeRecordId: recordId,
+                                ...addressForm.value
+                            })
+                        });
+                        
+                        const addressData = await addressResponse.json();
+                        
+                        if (addressData.code !== 200) {
+                            throw new Error(addressData.message || '保存地址失败');
+                        }
+                        
+                        message.success('兑换成功！请等待发货~');
+                        
+                        // 更新积分和库存
+                        points.value -= selectedItem.value.requiredPoints;
+                        selectedItem.value.currentStock--;
+                        
+                        closeModal();
+                        
+                        // 重新加载商品列表
+                        await loadItems();
+                        
+                    } catch (error) {
+                        console.error('兑换失败:', error);
+                        message.error(error.message || '兑换失败，请稍后重试');
+                    } finally {
+                        exchangeLoading.value = false;
+                    }
+                };
+                
+                // 返回上一页
+                const goBack = () => {
+                    window.close(); // 如果是新窗口打开，则关闭
+                    // 或者跳转回 gacha.html
+                    // window.location.href = 'gacha.html';
+                };
+                
+                // 打开我的兑换记录
+                const openMyOrdersModal = async () => {
+                    showOrdersModal.value = true;
+                    ordersLoading.value = true;
+                    
+                    try {
+                        const response = await fetch(`${GAME_API_BASE}/api/exchange/records`, {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token.value}`
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.code === 200) {
+                                exchangeRecords.value = data.data || [];
+                            }
+                        }
+                    } catch (error) {
+                        console.error('加载兑换记录失败:', error);
+                        message.error('加载兑换记录失败');
+                    } finally {
+                        ordersLoading.value = false;
+                    }
+                };
+                
+                // 关闭兑换记录弹窗
+                const closeOrdersModal = () => {
+                    showOrdersModal.value = false;
+                    exchangeRecords.value = [];
+                };
+                
+                // 获取状态样式类
+                const getStatusClass = (status) => {
+                    switch(status) {
+                        case 'PENDING': return 'status-pending';
+                        case 'SHIPPED': return 'status-shipped';
+                        case 'DELIVERED': return 'status-delivered';
+                        default: return 'status-pending';
+                    }
+                };
+                
+                // 获取状态文本
+                const getStatusText = (status) => {
+                    switch(status) {
+                        case 'PENDING': return '待发货';
+                        case 'SHIPPED': return '已发货';
+                        case 'DELIVERED': return '已送达';
+                        default: return '待发货';
+                    }
+                };
+                
+                // 格式化日期
+                const formatDate = (dateStr) => {
+                    if (!dateStr) return '';
+                    const date = new Date(dateStr);
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    return `${year}-${month}-${day} ${hours}:${minutes}`;
+                };
+                
+                onMounted(() => {
+                    loadUserInfo();
+                    loadItems();
+                });
+                
+                return {
+                    username,
+                    points,
+                    items,
+                    loading,
+                    showModal,
+                    selectedItem,
+                    exchangeLoading,
+                    addressForm,
+                    pyramidRows,
+                    canExchange,
+                    getButtonText,
+                    getRarityClass,
+                    getRarityText,
+                    getDefaultIcon,
+                    openExchangeModal,
+                    closeModal,
+                    confirmExchange,
+                    isAddressFormValid,
+                    goBack,
+                    showOrdersModal,
+                    exchangeRecords,
+                    ordersLoading,
+                    openMyOrdersModal,
+                    closeOrdersModal,
+                    getStatusClass,
+                    getStatusText,
+                    formatDate
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

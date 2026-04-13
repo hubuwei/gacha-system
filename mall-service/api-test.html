@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏商城 API 测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 游戏商城 API 测试平台</h1>
+    
+    <div class="test-section">
+        <h2>1️⃣ 用户注册</h2>
+        <input type="text" id="regUsername" placeholder="用户名" value="testuser">
+        <input type="password" id="regPassword" placeholder="密码" value="123456">
+        <input type="email" id="regEmail" placeholder="邮箱" value="test@example.com">
+        <input type="tel" id="regPhone" placeholder="手机号" value="13800138000">
+        <button onclick="register()">注册</button>
+        <div id="registerResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2️⃣ 用户登录</h2>
+        <input type="text" id="loginUsername" placeholder="用户名" value="testuser">
+        <input type="password" id="loginPassword" placeholder="密码" value="123456">
+        <button onclick="login()">登录</button>
+        <div id="loginResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3️⃣ 获取游戏列表</h2>
+        <button onclick="getGameList()">获取游戏列表</button>
+        <div id="gameListResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4️⃣ 获取热门游戏</h2>
+        <button onclick="getHotGames()">获取热门游戏</button>
+        <div id="hotGamesResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5️⃣ 获取打折游戏</h2>
+        <button onclick="getDiscountGames()">获取打折游戏</button>
+        <div id="discountGamesResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>6️⃣ 搜索游戏</h2>
+        <input type="text" id="searchKeyword" placeholder="搜索关键词" value="都市">
+        <button onclick="searchGames()">搜索</button>
+        <div id="searchResult" class="result"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8081/api';
+        
+        async function register() {
+            try {
+                const response = await fetch(`${BASE_URL}/user/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: document.getElementById('regUsername').value,
+                        password: document.getElementById('regPassword').value,
+                        email: document.getElementById('regEmail').value,
+                        phone: document.getElementById('regPhone').value
+                    })
+                });
+                const result = await response.json();
+                document.getElementById('registerResult').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('registerResult').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function login() {
+            try {
+                const response = await fetch(`${BASE_URL}/user/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: document.getElementById('loginUsername').value,
+                        password: document.getElementById('loginPassword').value
+                    })
+                });
+                const result = await response.json();
+                document.getElementById('loginResult').textContent = JSON.stringify(result, null, 2);
+                if (result.success) {
+                    localStorage.setItem('token', result.data.token);
+                    alert('登录成功！Token 已保存');
+                }
+            } catch (error) {
+                document.getElementById('loginResult').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function getGameList() {
+            try {
+                const response = await fetch(`${BASE_URL}/game/list?page=0&size=10`);
+                const result = await response.json();
+                document.getElementById('gameListResult').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('gameListResult').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function getHotGames() {
+            try {
+                const response = await fetch(`${BASE_URL}/game/hot?limit=10`);
+                const result = await response.json();
+                document.getElementById('hotGamesResult').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('hotGamesResult').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function getDiscountGames() {
+            try {
+                const response = await fetch(`${BASE_URL}/game/discount`);
+                const result = await response.json();
+                document.getElementById('discountGamesResult').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('discountGamesResult').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function searchGames() {
+            try {
+                const keyword = document.getElementById('searchKeyword').value;
+                const response = await fetch(`${BASE_URL}/game/search?keyword=${encodeURIComponent(keyword)}&page=0&size=10`);
+                const result = await response.json();
+                document.getElementById('searchResult').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('searchResult').textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
