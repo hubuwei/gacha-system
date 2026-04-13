@@ -58,3 +58,6 @@ backup_*.sql
 
 ### IDE ###
 .vscode/settings.json
+
+### Deploy Packages ###
+deploy-packages/*.jar
