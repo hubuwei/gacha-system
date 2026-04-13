@@ -1,0 +1,44 @@
+[Unit]
+Description=Game Mall Service
+After=network.target mysql.service redis.service rabbitmq-server.service elasticsearch.service
+Wants=mysql.service redis.service rabbitmq-server.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+
+# 工作目录
+WorkingDirectory=/opt/gacha-system/mall-service
+
+# 环境变量
+Environment="SPRING_PROFILES_ACTIVE=prod"
+Environment="GAME_PAPERS_PATH=/opt/gacha-system/GamePapers"
+
+# 或者使用.env文件（推荐）
+# EnvironmentFile=/opt/gacha-system/.env.prod
+
+# 启动命令
+ExecStart=/usr/bin/java \
+    -Xms512m \
+    -Xmx1024m \
+    -XX:+UseG1GC \
+    -jar /opt/gacha-system/mall-service/target/mall-service-1.0.0-SNAPSHOT.jar
+
+# 重启策略
+Restart=on-failure
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=3
+
+# 日志
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mall-service
+
+# 安全设置
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

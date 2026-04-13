@@ -89,6 +89,12 @@ logging:
   pattern:
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
+# 静态资源配置
+static:
+  resources:
+    # 生产环境使用绝对路径
+    game-papers-path: /opt/gacha-system/GamePapers
+
 # 管理端点
 management:
   endpoints:

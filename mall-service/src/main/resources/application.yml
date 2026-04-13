@@ -175,3 +175,11 @@ mall:
     review-audit-enabled: true
     # 图片上传大小限制（MB）
     max-upload-size: 10
+
+# 静态资源配置
+static:
+  resources:
+    # GamePapers目录路径（留空则自动检测，生产环境建议配置绝对路径）
+    # 本地开发：留空，自动检测为项目根目录/GamePapers
+    # 生产环境：配置为 /opt/gacha-system/GamePapers
+    game-papers-path: ${GAME_PAPERS_PATH:}
