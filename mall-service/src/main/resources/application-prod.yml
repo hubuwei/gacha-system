@@ -15,9 +15,9 @@ spring:
   
   # 数据源配置
   datasource:
-    url: jdbc:mysql://localhost:3306/gacha_system_prod?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=convertToNull
-    username: root
-    password: Xc037417!
+    url: jdbc:mysql://${DB_HOST:mysql}:${DB_PORT:3306}/${DB_NAME:gacha_system_prod}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=convertToNull
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:Xc037417!}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20
@@ -33,14 +33,14 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: false
   
   # Redis 配置
   redis:
-    host: localhost
-    port: 6379
-    password: Xc037417!
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:Xc037417!}
     database: 0
     timeout: 5000ms
     lettuce:
@@ -51,10 +51,10 @@ spring:
   
   # RabbitMQ 配置
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: admin
-    password: Xc037417!
+    host: ${RABBITMQ_HOST:rabbitmq}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:admin}
+    password: ${RABBITMQ_PASSWORD:Xc037417!}
     virtual-host: /
     listener:
       simple:
