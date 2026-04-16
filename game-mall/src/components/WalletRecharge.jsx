@@ -52,8 +52,9 @@ function WalletRecharge({ currentUser, userBalance, onRechargeSuccess }) {
           successMessage = `已充值 ￥${rechargeAmount.toFixed(2)}，余额已更新`
         } else if (paymentMethod === 'alipay') {
           successMessage = `演示模式 - 已模拟支付宝充值 ￥${rechargeAmount.toFixed(2)}`
-        } else if (paymentMethod === 'wechat') {
-          successMessage = `演示模式 - 已模拟微信充值 ￥${rechargeAmount.toFixed(2)}`
+        // TODO: 微信支付已注释
+        /* } else if (paymentMethod === 'wechat') {
+          successMessage = `演示模式 - 已模拟微信充值 ￥${rechargeAmount.toFixed(2)}` */
         }
         
         // 先显示成功通知
@@ -175,7 +176,8 @@ function WalletRecharge({ currentUser, userBalance, onRechargeSuccess }) {
                 </div>
               </div>
 
-              <div 
+              {/* TODO: 微信支付功能已临时注释（生产环境待配置）}
+              {/* <div 
                 className={`payment-option ${paymentMethod === 'wechat' ? 'selected' : ''}`}
                 onClick={() => setPaymentMethod('wechat')}
               >
@@ -184,7 +186,7 @@ function WalletRecharge({ currentUser, userBalance, onRechargeSuccess }) {
                   <div className="payment-name">微信支付</div>
                   <div className="payment-desc">便捷</div>
                 </div>
-              </div>
+              </div> */}
 
               <div 
                 className={`payment-option ${paymentMethod === 'balance' ? 'selected' : ''}`}
@@ -214,7 +216,8 @@ function WalletRecharge({ currentUser, userBalance, onRechargeSuccess }) {
                 <span className="summary-label">支付方式</span>
                 <span className="summary-value">
                   {paymentMethod === 'alipay' && '支付宝'}
-                  {paymentMethod === 'wechat' && '微信支付'}
+                  {/* TODO: 微信支付已注释 */}
+                  {/* {paymentMethod === 'wechat' && '微信支付'} */}
                   {paymentMethod === 'balance' && '测试模式'}
                 </span>
               </div>

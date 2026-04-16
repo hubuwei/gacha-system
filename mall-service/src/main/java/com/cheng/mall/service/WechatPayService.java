@@ -47,6 +47,12 @@ public class WechatPayService {
     
     @PostConstruct
     public void init() {
+        // 模拟支付模式不需要初始化真实配置
+        if (mockEnabled) {
+            log.info("微信支付服务已启用模拟模式，跳过证书初始化");
+            return;
+        }
+        
         try {
             // 使用自动更新证书的配置
             config = new RSAAutoCertificateConfig.Builder()
@@ -59,7 +65,11 @@ public class WechatPayService {
             nativePayService = new NativePayService.Builder().config(config).build();
             log.info("微信支付服务初始化成功");
         } catch (Exception e) {
-            log.error("微信支付服务初始化失败", e);
+            // TODO: 微信支付功能已临时禁用，记录警告但不阻止启动
+            log.warn("微信支付服务初始化失败（已禁用），将使用模拟模式: {}", e.getMessage());
+            // 强制启用模拟模式，确保应用可以正常启动
+            mockEnabled = true;
+            log.info("已自动切换到模拟支付模式");
         }
     }
     

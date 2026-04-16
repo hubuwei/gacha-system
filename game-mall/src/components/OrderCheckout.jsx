@@ -124,7 +124,8 @@ function OrderCheckout({ currentUser, userBalance: propUserBalance, onOrderSucce
         }
         
         // 如果是第三方支付，显示二维码
-        if (paymentMethod === 'alipay' || paymentMethod === 'wechat') {
+        // TODO: 微信支付已注释，暂时只支持支付宝
+        if (paymentMethod === 'alipay' /* || paymentMethod === 'wechat' */) {
           setShowQRCode(true)
           return
         }
@@ -315,7 +316,8 @@ function OrderCheckout({ currentUser, userBalance: propUserBalance, onOrderSucce
               </div>
             </label>
 
-            <label className={`payment-option ${paymentMethod === 'wechat' ? 'selected' : ''}`}>
+            {/* TODO: 微信支付功能已临时注释（生产环境待配置）}
+            {/* <label className={`payment-option ${paymentMethod === 'wechat' ? 'selected' : ''}`}>
               <input
                 type="radio"
                 name="payment"
@@ -329,7 +331,7 @@ function OrderCheckout({ currentUser, userBalance: propUserBalance, onOrderSucce
                   <span className="payment-name">微信支付</span>
                 </div>
               </div>
-            </label>
+            </label> */}
           </div>
 
           <button 
