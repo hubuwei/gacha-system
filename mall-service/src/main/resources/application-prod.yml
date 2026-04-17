@@ -15,7 +15,7 @@ spring:
   
   # 数据源配置
   datasource:
-    url: jdbc:mysql://${DB_HOST:mysql}:${DB_PORT:3306}/${DB_NAME:gacha_system_prod}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=convertToNull
+    url: jdbc:mysql://${DB_HOST:mysql}:${DB_PORT:3306}/${DB_NAME:gacha_system_prod}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=convertToNull&useAffectedRows=true
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:Xc037417!}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -63,9 +63,13 @@ spring:
         max-concurrency: 10
   
   # Elasticsearch 配置
+  data:
+    elasticsearch:
+      repositories:
+        enabled: false  # 禁用Repository自动初始化,避免启动时连接失败
   elasticsearch:
     rest:
-      uris: ${ES_URIS:http://localhost:9200}
+      uris: ${ES_URIS:http://elasticsearch:9200}
       username: ${ES_USERNAME:}
       password: ${ES_PASSWORD:}
       connection-timeout: 5s

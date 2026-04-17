@@ -47,7 +47,7 @@ aliyun:
     template-code: ${ALIYUN_SMS_TEMPLATE_CODE:}
 
 server:
-  port: 8084
+  port: ${APP_PORT:8084}
 
 logging:
   level:

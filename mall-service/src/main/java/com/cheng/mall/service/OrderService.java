@@ -129,7 +129,9 @@ public class OrderService {
                 orderRepository.save(order);
                 throw new IllegalArgumentException("余额不足，请充值后重试");
             }
-        } else if ("wechat".equals(paymentMethod)) {
+        }
+        // TODO: 微信支付功能已临时注释（生产环境待配置）
+        /* else if ("wechat".equals(paymentMethod)) {
             // 微信支付：生成 Native 二维码
             try {
                 Map<String, Object> wechatResult = wechatPayService.createNativeOrder(
@@ -148,7 +150,8 @@ public class OrderService {
                 orderRepository.save(order);
                 throw new RuntimeException("微信下单失败: " + e.getMessage());
             }
-        } else if ("alipay".equals(paymentMethod)) {
+        } */
+        else if ("alipay".equals(paymentMethod)) {
             // TODO: 支付宝支付逻辑
             log.info("支付宝支付待实现: orderNo={}", orderNo);
         }

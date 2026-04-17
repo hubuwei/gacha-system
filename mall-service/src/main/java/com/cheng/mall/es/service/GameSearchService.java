@@ -4,6 +4,7 @@ import com.cheng.mall.es.document.GameDocument;
 import com.cheng.mall.es.repository.GameEsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
@@ -26,6 +27,7 @@ import static org.elasticsearch.index.query.QueryBuilders.*;
 public class GameSearchService {
     
     @Autowired
+    @Lazy  // 延迟加载,避免启动时因ES未就绪导致失败
     private GameEsRepository gameEsRepository;
     
     @Autowired

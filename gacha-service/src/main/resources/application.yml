@@ -16,7 +16,7 @@ spring:
         default_storage_engine: innodb
 
 server:
-  port: 8083
+  port: ${APP_PORT:8083}
 
 logging:
   level:

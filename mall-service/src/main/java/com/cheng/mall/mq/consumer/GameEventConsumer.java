@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -30,6 +31,7 @@ public class GameEventConsumer {
     private GameRepository gameRepository;
     
     @Autowired
+    @Lazy  // 延迟加载,避免启动时因ES未就绪导致失败
     private GameEsRepository gameEsRepository;
     
     @Autowired

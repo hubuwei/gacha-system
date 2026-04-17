@@ -30,7 +30,7 @@ spring:
     # 注意：生产环境必须使用 Redis
 
 server:
-  port: 8082
+  port: ${APP_PORT:8082}
 
 logging:
   level:
