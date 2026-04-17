@@ -28,7 +28,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_PRIVATE_KEY }}
           script: |
-            cd /opt/steam-project
+            cd /opt/gacha-system
             git pull
             docker compose down
             docker compose up -d --build
