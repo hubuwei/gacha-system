@@ -3,71 +3,57 @@ version: '3.8'
 services:
   mysql:
     image: mysql:8.0
-    container_name: steam-mysql
+    container_name: gacha-mysql
     restart: always
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: root123456
-      MYSQL_DATABASE: steam_db
+      MYSQL_ROOT_PASSWORD: Xc037417!
+      MYSQL_DATABASE: gacha_system_prod
     volumes:
       - ./mysql/data:/var/lib/mysql
     networks:
-      - steam-net
+      - gacha-net
 
   redis:
     image: redis:6
-    container_name: steam-redis
+    container_name: gacha-redis
     restart: always
     ports:
       - "6379:6379"
-    command: redis-server --requirepass 123456
+    command: redis-server --requirepass Xc037417!
     volumes:
       - ./redis/data:/data
     networks:
-      - steam-net
+      - gacha-net
 
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: steam-rabbitmq
+    container_name: gacha-rabbitmq
     restart: always
     ports:
       - "5672:5672"
       - "15672:15672"
-    networks:
-      - steam-net
-
-  es:
-    image: elasticsearch:7.17.29
-    container_name: steam-es
-    restart: always
-    ports:
-      - "9200:9200"
     environment:
-      - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms4g -Xmx4g
-      - xpack.security.enabled=true
-      - ELASTIC_PASSWORD=elastic123
-    volumes:
-      - ./es/data:/usr/share/elasticsearch/data
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: Xc037417!
     networks:
-      - steam-net
+      - gacha-net
 
-  steam-app:
+  gacha-app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: steam-app
+    container_name: gacha-app
     restart: always
     ports:
-      - "8080:8080"
+      - "8081:8081"
     depends_on:
       - mysql
       - redis
       - rabbitmq
-      - es
     networks:
-      - steam-net
+      - gacha-net
 
 networks:
-  steam-net:
+  gacha-net:
