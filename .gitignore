@@ -67,3 +67,7 @@ deploy-packages/*.jar
 !.env.docker
 !.env.example
 !.env.prod.example
+
+### Large Files ###
+gacha-images.tar
+gacha-images.zip
