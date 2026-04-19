@@ -1378,7 +1378,7 @@ function App({ onUserLogin, onUserLogout }) {
                 <div className="featured-image">
                   {game.image && game.image.startsWith('/') ? (
                     <img 
-                      src={`${MALL_API_BASE}${game.image}`} 
+                      src={game.image} 
                       alt={game.name}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       onError={(e) => {
@@ -1554,7 +1554,7 @@ function App({ onUserLogin, onUserLogout }) {
                     <div className="game-image">
                       {game.image && game.image.startsWith('/') ? (
                         <img 
-                          src={`${MALL_API_BASE}${game.image}`} 
+                          src={game.image} 
                           alt={game.name}
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           onError={(e) => {
