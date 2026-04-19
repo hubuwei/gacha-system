@@ -2,7 +2,7 @@
 # Mall Service Dockerfile
 # ============================================
 
-FROM eclipse-temurin:11-jre
+FROM openjdk:11-jre-slim
 WORKDIR /app
 COPY target/*.jar app.jar
 EXPOSE 8081
