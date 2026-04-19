@@ -63,17 +63,20 @@ spring:
         max-concurrency: 10
   
   # Elasticsearch 配置
+  elasticsearch:
+    uris: ${ES_URIS:http://elasticsearch:9200}
+    username: ${ES_USERNAME:}
+    password: ${ES_PASSWORD:}
+    connection-timeout: 5s
+    socket-timeout: 30s
   data:
     elasticsearch:
       repositories:
         enabled: false  # 禁用Repository自动初始化,避免启动时连接失败
-  elasticsearch:
-    rest:
-      uris: ${ES_URIS:http://elasticsearch:9200}
-      username: ${ES_USERNAME:}
-      password: ${ES_PASSWORD:}
-      connection-timeout: 5s
-      read-timeout: 30s
+
+# Elasticsearch 启用开关（用于条件注解）
+elasticsearch:
+  enabled: true
 
 # JWT 配置
 jwt:

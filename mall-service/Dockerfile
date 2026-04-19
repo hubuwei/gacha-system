@@ -1,55 +1,7 @@
 # ============================================
-# Mall Service Dockerfile
+# Mall Service Dockerfile (基于现有镜像)
 # ============================================
 
-# 阶段1: 构建
-FROM maven:3.8-openjdk-11 AS builder
-
+FROM gacha-system-mall-service:latest
 WORKDIR /app
-
-# 复制根目录pom.xml（父项目）和各模块pom.xml
-COPY pom.xml .
-COPY common/pom.xml common/
-COPY mall-service/pom.xml mall-service/
-
-# 先安装父pom，再构建并安装common模块，最后处理mall-service
-RUN mvn install -N -B && \
-    cd common && mvn clean install -DskipTests -B && \
-    cd ../mall-service && mvn dependency:go-offline -B
-
-# 复制源代码并编译
-COPY common/src common/src
-COPY mall-service/src mall-service/src
-
-RUN cd common && mvn clean install -DskipTests && \
-    cd ../mall-service && mvn clean package -DskipTests
-
-# 阶段2: 运行
-FROM openjdk:11-jre-slim
-
-WORKDIR /app
-
-# 创建非root用户（Debian兼容）
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
-# 从构建阶段复制JAR包
-COPY --from=builder /app/mall-service/target/*.jar app.jar
-
-# 创建日志目录
-RUN mkdir -p /app/logs && chown -R appuser:appuser /app
-
-# 切换到非root用户
-USER appuser
-
-# 暴露端口
-EXPOSE 8081
-
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8081/api/actuator/health || exit 1
-
-# JVM参数优化
-ENV JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
-
-# 启动应用
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar --spring.profiles.active=${SPRING_PROFILE:-prod}"]
+COPY target/*.jar app.jar
