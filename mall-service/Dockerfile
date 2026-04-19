@@ -25,7 +25,7 @@ RUN cd common && mvn clean install -DskipTests && \
     cd ../mall-service && mvn clean package -DskipTests
 
 # 阶段2: 运行
-FROM eclipse-temurin:11-jre-alpine
+FROM openjdk:11-jre-slim
 
 WORKDIR /app
 

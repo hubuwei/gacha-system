@@ -21,7 +21,7 @@ COPY game-service/src game-service/src
 RUN cd common && mvn clean install -DskipTests && \
     cd ../game-service && mvn clean package -DskipTests
 
-FROM eclipse-temurin:11-jre-alpine
+FROM openjdk:11-jre-slim
 
 WORKDIR /app
 

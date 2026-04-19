@@ -21,7 +21,7 @@ COPY gacha-service/src gacha-service/src
 RUN cd common && mvn clean install -DskipTests && \
     cd ../gacha-service && mvn clean package -DskipTests
 
-FROM eclipse-temurin:11-jre-alpine
+FROM openjdk:11-jre-slim
 
 WORKDIR /app
 
