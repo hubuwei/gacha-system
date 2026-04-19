@@ -1,0 +1,72 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "ik_max_word": {
+          "type": "custom",
+          "tokenizer": "ik_max_word"
+        },
+        "ik_smart": {
+          "type": "custom",
+          "tokenizer": "ik_smart"
+        },
+        "pinyin_analyzer": {
+          "type": "custom",
+          "tokenizer": "pinyin_tokenizer"
+        }
+      },
+      "tokenizer": {
+        "ik_max_word": {
+          "type": "ik_max_word",
+          "use_smart": false
+        },
+        "ik_smart": {
+          "type": "ik_smart",
+          "use_smart": true
+        },
+        "pinyin_tokenizer": {
+          "type": "pinyin",
+          "keep_first_letter": true,
+          "keep_full_pinyin": true,
+          "keep_original": true,
+          "limit_first_letter_length": 16,
+          "lowercase": true,
+          "remove_duplicated_term": true
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id": { "type": "long" },
+      "title": {
+        "type": "text",
+        "analyzer": "ik_max_word",
+        "search_analyzer": "ik_smart",
+        "fields": {
+          "keyword": { "type": "keyword", "ignore_above": 256 }
+        }
+      },
+      "shortDescription": { "type": "text", "analyzer": "ik_max_word", "search_analyzer": "ik_smart" },
+      "fullDescription": { "type": "text", "analyzer": "ik_max_word", "search_analyzer": "ik_smart" },
+      "developer": { "type": "text", "analyzer": "ik_max_word", "search_analyzer": "ik_smart" },
+      "publisher": { "type": "text", "analyzer": "ik_max_word", "search_analyzer": "ik_smart" },
+      "tags": { "type": "keyword" },
+      "categories": { "type": "keyword" },
+      "coverImage": { "type": "keyword" },
+      "basePrice": { "type": "double" },
+      "currentPrice": { "type": "double" },
+      "discountRate": { "type": "integer" },
+      "rating": { "type": "double" },
+      "ratingCount": { "type": "integer" },
+      "totalSales": { "type": "long" },
+      "totalReviews": { "type": "integer" },
+      "isFeatured": { "type": "boolean" },
+      "isOnSale": { "type": "boolean" },
+      "releaseDate": { "type": "date", "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis" },
+      "updatedAt": { "type": "date", "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis" },
+      "titlePinyin": { "type": "text", "analyzer": "pinyin_analyzer" },
+      "descriptionPinyin": { "type": "text", "analyzer": "pinyin_analyzer" }
+    }
+  }
+}

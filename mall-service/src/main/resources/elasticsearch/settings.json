@@ -11,7 +11,7 @@
       },
       "pinyin_analyzer": {
         "type": "custom",
-        "tokenizer": "standard"
+        "tokenizer": "pinyin_tokenizer"
       }
     },
     "tokenizer": {
@@ -24,13 +24,13 @@
         "use_smart": true
       },
       "pinyin_tokenizer": {
-        "type": "standard"
-      }
-    },
-    "filter": {
-      "synonym_filter": {
-        "type": "synonym",
-        "synonyms_path": "analysis/synonym.txt"
+        "type": "pinyin",
+        "keep_first_letter": true,
+        "keep_full_pinyin": true,
+        "keep_original": true,
+        "limit_first_letter_length": 16,
+        "lowercase": true,
+        "remove_duplicated_term": true
       }
     }
   }
