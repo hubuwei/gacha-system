@@ -25,7 +25,7 @@ FROM openjdk:11-jre-slim
 
 WORKDIR /app
 
-RUN addgroup -S appuser && adduser -S appuser -G appuser
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 COPY --from=builder /app/game-service/target/*.jar app.jar
 

@@ -29,8 +29,8 @@ FROM openjdk:11-jre-slim
 
 WORKDIR /app
 
-# 创建非root用户（Alpine兼容）
-RUN addgroup -S appuser && adduser -S appuser -G appuser
+# 创建非root用户（Debian兼容）
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 # 从构建阶段复制JAR包
 COPY --from=builder /app/mall-service/target/*.jar app.jar
