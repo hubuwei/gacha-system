@@ -49,9 +49,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
         }
         
         // 注册静态资源处理器
-        // 注意：因为 context-path 是 /api，所以路径需要加上 /api 前缀
-        registry.addResourceHandler("/api/GamePapers/**")
+        // 注意：因为 context-path 是 /api，所以路径不需要再加上 /api 前缀
+        registry.addResourceHandler("/GamePapers/**")
                 .addResourceLocations("file:" + gamePapersDir + File.separator);
-        log.info("[WebMvcConfig] 已注册静态资源映射: /api/GamePapers/** -> file:{}", gamePapersDir + File.separator);
+        log.info("[WebMvcConfig] 已注册静态资源映射: /GamePapers/** -> file:{}", gamePapersDir + File.separator);
     }
 }
