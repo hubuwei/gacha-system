@@ -15,7 +15,7 @@ spring:
   
   # 数据源配置
   datasource:
-    url: jdbc:mysql://${DB_HOST:gacha-mysql}:${DB_PORT:3306}/${DB_NAME:gacha_system_prod}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=convertToNull&useAffectedRows=true
+    url: jdbc:mysql://gacha-mysql:3306/gacha_system_prod?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:Xc037417!}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -38,7 +38,7 @@ spring:
   
   # Redis 配置
   redis:
-    host: ${REDIS_HOST:gacha-redis}
+    host: gacha-redis
     port: ${REDIS_PORT:6379}
     password: ${REDIS_PASSWORD:Xc037417!}
     database: 0
@@ -51,7 +51,7 @@ spring:
   
   # RabbitMQ 配置
   rabbitmq:
-    host: ${RABBITMQ_HOST:gacha-rabbitmq}
+    host: gacha-rabbitmq
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:admin}
     password: ${RABBITMQ_PASSWORD:Xc037417!}
