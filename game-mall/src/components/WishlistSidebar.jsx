@@ -94,7 +94,15 @@ function WishlistSidebar({ isOpen, onClose, currentUser }) {
                 {wishlistItems.map((item) => (
                   <div key={item.wishlistId} className="wishlist-item">
                     <div className="item-image">
-                      {item.game?.coverImage || '🎮'}
+                      {item.game?.coverImage ? (
+                        <img 
+                          src={item.game.coverImage} 
+                          alt={item.game.title} 
+                          onError={(e) => e.target.src = '🎮'}
+                        />
+                      ) : (
+                        '🎮'
+                      )}
                     </div>
                     <div className="item-info">
                       <h4 className="item-name">{item.game?.title}</h4>
