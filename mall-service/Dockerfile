@@ -1,7 +1,9 @@
 # ============================================
-# Mall Service Dockerfile (基于现有镜像)
+# Mall Service Dockerfile
 # ============================================
 
-FROM gacha-system-mall-service:latest
+FROM eclipse-temurin:11-jre
 WORKDIR /app
 COPY target/*.jar app.jar
+EXPOSE 8081
+ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=prod"]
