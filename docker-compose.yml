@@ -14,6 +14,11 @@ services:
       - ./mysql/data:/var/lib/mysql
     networks:
       - gacha-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pXc037417!"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   redis:
     image: redis:6
@@ -49,9 +54,12 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - mysql
-      - redis
-      - rabbitmq
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
     networks:
       - gacha-net
 
