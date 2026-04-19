@@ -18,10 +18,10 @@ import static com.cheng.mall.config.RabbitMQConfig.*;
 @Component
 public class MessageProducer {
     
-    @Autowired
+    @Autowired(required = false)
     private RabbitTemplate rabbitTemplate;
     
-    @Autowired
+    @Autowired(required = false)
     private ObjectMapper objectMapper;
     
     /**

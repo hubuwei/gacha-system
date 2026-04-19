@@ -17,10 +17,10 @@ import java.util.stream.Collectors;
 @Service
 public class BroadcastNotificationService {
     
-    @Autowired
+    @Autowired(required = false)
     private UserRepository userRepository;
     
-    @Autowired
+    @Autowired(required = false)
     private NotificationProducer notificationProducer;
     
     /**

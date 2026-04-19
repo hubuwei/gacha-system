@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class TempCartService {
     
-    @Autowired
+    @Autowired(required = false)
     private RedisUtil redisUtil;
     
     // 临时购物车 key 前缀
@@ -40,15 +40,19 @@ public class TempCartService {
      * @param quantity 数量
      */
     public void addToTempCart(String tempCartId, Long gameId, int quantity) {
-        String cartKey = TEMP_CART_KEY_PREFIX + tempCartId;
-        
-        // 使用 Hash 存储，field 为 gameId，value 为 quantity
-        redisUtil.hSet(cartKey, String.valueOf(gameId), quantity);
-        
-        // 设置过期时间
-        redisUtil.expire(cartKey, TEMP_CART_EXPIRE_DAYS, TimeUnit.DAYS);
-        
-        log.info("添加到临时购物车: tempCartId={}, gameId={}, quantity={}", tempCartId, gameId, quantity);
+        if (redisUtil != null) {
+            String cartKey = TEMP_CART_KEY_PREFIX + tempCartId;
+            
+            // 使用 Hash 存储，field 为 gameId，value 为 quantity
+            redisUtil.hSet(cartKey, String.valueOf(gameId), quantity);
+            
+            // 设置过期时间
+            redisUtil.expire(cartKey, TEMP_CART_EXPIRE_DAYS, TimeUnit.DAYS);
+            
+            log.info("添加到临时购物车: tempCartId={}, gameId={}, quantity={}", tempCartId, gameId, quantity);
+        } else {
+            log.warn("Redis 未启用，跳过添加临时购物车: tempCartId={}, gameId={}", tempCartId, gameId);
+        }
     }
     
     /**
@@ -58,10 +62,14 @@ public class TempCartService {
      * @param gameId 游戏ID
      */
     public void removeFromTempCart(String tempCartId, Long gameId) {
-        String cartKey = TEMP_CART_KEY_PREFIX + tempCartId;
-        redisUtil.hDelete(cartKey, String.valueOf(gameId));
-        
-        log.info("从临时购物车移除: tempCartId={}, gameId={}", tempCartId, gameId);
+        if (redisUtil != null) {
+            String cartKey = TEMP_CART_KEY_PREFIX + tempCartId;
+            redisUtil.hDelete(cartKey, String.valueOf(gameId));
+            
+            log.info("从临时购物车移除: tempCartId={}, gameId={}", tempCartId, gameId);
+        } else {
+            log.warn("Redis 未启用，跳过移除临时购物车: tempCartId={}, gameId={}", tempCartId, gameId);
+        }
     }
     
     /**
@@ -71,14 +79,19 @@ public class TempCartService {
      * @return 商品 Map (gameId -> quantity)
      */
     public Map<Object, Object> getTempCart(String tempCartId) {
-        String cartKey = TEMP_CART_KEY_PREFIX + tempCartId;
-        Map<Object, Object> cartItems = redisUtil.hGetAll(cartKey);
-        
-        if (cartItems == null) {
+        if (redisUtil != null) {
+            String cartKey = TEMP_CART_KEY_PREFIX + tempCartId;
+            Map<Object, Object> cartItems = redisUtil.hGetAll(cartKey);
+            
+            if (cartItems == null) {
+                return new HashMap<>();
+            }
+            
+            return cartItems;
+        } else {
+            log.warn("Redis 未启用，返回空临时购物车: tempCartId={}", tempCartId);
             return new HashMap<>();
         }
-        
-        return cartItems;
     }
     
     /**
@@ -94,10 +107,14 @@ public class TempCartService {
             return;
         }
         
-        String cartKey = TEMP_CART_KEY_PREFIX + tempCartId;
-        redisUtil.hSet(cartKey, String.valueOf(gameId), quantity);
-        
-        log.info("更新临时购物车数量: tempCartId={}, gameId={}, quantity={}", tempCartId, gameId, quantity);
+        if (redisUtil != null) {
+            String cartKey = TEMP_CART_KEY_PREFIX + tempCartId;
+            redisUtil.hSet(cartKey, String.valueOf(gameId), quantity);
+            
+            log.info("更新临时购物车数量: tempCartId={}, gameId={}, quantity={}", tempCartId, gameId, quantity);
+        } else {
+            log.warn("Redis 未启用，跳过更新临时购物车: tempCartId={}, gameId={}", tempCartId, gameId);
+        }
     }
     
     /**
@@ -106,10 +123,14 @@ public class TempCartService {
      * @param tempCartId 临时购物车 ID
      */
     public void clearTempCart(String tempCartId) {
-        String cartKey = TEMP_CART_KEY_PREFIX + tempCartId;
-        redisUtil.delete(cartKey);
-        
-        log.info("清空临时购物车: tempCartId={}", tempCartId);
+        if (redisUtil != null) {
+            String cartKey = TEMP_CART_KEY_PREFIX + tempCartId;
+            redisUtil.delete(cartKey);
+            
+            log.info("清空临时购物车: tempCartId={}", tempCartId);
+        } else {
+            log.warn("Redis 未启用，跳过清空临时购物车: tempCartId={}", tempCartId);
+        }
     }
     
     /**
@@ -152,9 +173,14 @@ public class TempCartService {
      * @return 商品种类数
      */
     public int getTempCartCount(String tempCartId) {
-        String cartKey = TEMP_CART_KEY_PREFIX + tempCartId;
-        Map<Object, Object> cartItems = redisUtil.hGetAll(cartKey);
-        
-        return cartItems != null ? cartItems.size() : 0;
+        if (redisUtil != null) {
+            String cartKey = TEMP_CART_KEY_PREFIX + tempCartId;
+            Map<Object, Object> cartItems = redisUtil.hGetAll(cartKey);
+            
+            return cartItems != null ? cartItems.size() : 0;
+        } else {
+            log.warn("Redis 未启用，返回临时购物车数量: 0, tempCartId={}", tempCartId);
+            return 0;
+        }
     }
 }

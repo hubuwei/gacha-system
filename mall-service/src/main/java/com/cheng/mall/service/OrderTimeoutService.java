@@ -21,14 +21,14 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class OrderTimeoutService {
     
-    @Autowired
+    @Autowired(required = false)
     private RedisTemplate<String, Object> redisTemplate;
     
     @Autowired
     @Lazy  // 延迟加载，打破循环依赖
     private OrderService orderService;
     
-    @Autowired
+    @Autowired(required = false)
     private RedisMessageListenerContainer redisMessageListenerContainer;
     
     private static final String ORDER_TIMEOUT_KEY = "order:timeout:";
@@ -39,63 +39,80 @@ public class OrderTimeoutService {
      */
     @PostConstruct
     public void initKeySpaceListener() {
-        // 监听 __keyevent@0__:expired 事件（key 过期事件）
-        redisMessageListenerContainer.addMessageListener(new MessageListener() {
-            @Override
-            public void onMessage(Message message, byte[] pattern) {
-                String expiredKey = new String(message.getBody(), StandardCharsets.UTF_8);
-                log.info("Redis Key 过期: {}", expiredKey);
-                
-                // 检查是否是订单超时 key
-                if (expiredKey.startsWith(ORDER_TIMEOUT_KEY) && 
-                    !expiredKey.contains("remind")) {
-                    // 提取订单号
-                    String orderNo = expiredKey.substring(ORDER_TIMEOUT_KEY.length());
-                    log.info("订单超时，准备取消: orderNo={}", orderNo);
+        if (redisMessageListenerContainer != null) {
+            // 监听 __keyevent@0__:expired 事件（key 过期事件）
+            redisMessageListenerContainer.addMessageListener(new MessageListener() {
+                @Override
+                public void onMessage(Message message, byte[] pattern) {
+                    String expiredKey = new String(message.getBody(), StandardCharsets.UTF_8);
+                    log.info("Redis Key 过期: {}", expiredKey);
                     
-                    // 异步取消订单
-                    cancelExpiredOrder(orderNo);
+                    // 检查是否是订单超时 key
+                    if (expiredKey.startsWith(ORDER_TIMEOUT_KEY) && 
+                        !expiredKey.contains("remind")) {
+                        // 提取订单号
+                        String orderNo = expiredKey.substring(ORDER_TIMEOUT_KEY.length());
+                        log.info("订单超时，准备取消: orderNo={}", orderNo);
+                        
+                        // 异步取消订单
+                        cancelExpiredOrder(orderNo);
+                    }
                 }
-            }
-        }, new PatternTopic("__keyevent@0__:expired"));
-        
-        log.info("Redis 键空间通知监听器已启动");
+            }, new PatternTopic("__keyevent@0__:expired"));
+            
+            log.info("Redis 键空间通知监听器已启动");
+        } else {
+            log.warn("Redis 未启用，跳过键空间通知监听器初始化");
+        }
     }
     
     /**
      * 创建订单时设置超时
      */
     public void setOrderTimeout(String orderNo, Long userId) {
-        String key = ORDER_TIMEOUT_KEY + orderNo;
-        
-        // 设置订单超时时间（15分钟）
-        redisTemplate.opsForValue().set(key, userId.toString(), TIMEOUT_MINUTES, TimeUnit.MINUTES);
-        
-        log.info("订单超时监控已设置: orderNo={}, 超时时间={}分钟", orderNo, TIMEOUT_MINUTES);
+        if (redisTemplate != null) {
+            String key = ORDER_TIMEOUT_KEY + orderNo;
+            
+            // 设置订单超时时间（15分钟）
+            redisTemplate.opsForValue().set(key, userId.toString(), TIMEOUT_MINUTES, TimeUnit.MINUTES);
+            
+            log.info("订单超时监控已设置: orderNo={}, 超时时间={}分钟", orderNo, TIMEOUT_MINUTES);
+        } else {
+            log.warn("Redis 未启用，跳过订单超时监控设置: orderNo={}", orderNo);
+        }
     }
     
     /**
      * 支付成功后删除超时监控
      */
     public void removeOrderTimeout(String orderNo) {
-        String key = ORDER_TIMEOUT_KEY + orderNo;
-        redisTemplate.delete(key);
-        
-        log.info("订单超时监控已移除: orderNo={}", orderNo);
+        if (redisTemplate != null) {
+            String key = ORDER_TIMEOUT_KEY + orderNo;
+            redisTemplate.delete(key);
+            
+            log.info("订单超时监控已移除: orderNo={}", orderNo);
+        } else {
+            log.warn("Redis 未启用，跳过订单超时监控移除: orderNo={}", orderNo);
+        }
     }
     
     /**
      * 检查订单是否超时（用于前端查询）
      */
     public Long getRemainingTime(String orderNo) {
-        String key = ORDER_TIMEOUT_KEY + orderNo;
-        Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
-        
-        if (ttl == null || ttl < 0) {
-            return 0L; // 已过期或不存在
+        if (redisTemplate != null) {
+            String key = ORDER_TIMEOUT_KEY + orderNo;
+            Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+            
+            if (ttl == null || ttl < 0) {
+                return 0L; // 已过期或不存在
+            }
+            
+            return ttl;
+        } else {
+            log.warn("Redis 未启用，返回默认超时时间: orderNo={}", orderNo);
+            return TIMEOUT_MINUTES * 60L; // 返回默认超时时间（秒）
         }
-        
-        return ttl;
     }
     
     /**

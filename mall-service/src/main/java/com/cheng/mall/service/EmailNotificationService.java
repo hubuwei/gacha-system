@@ -24,16 +24,16 @@ import java.util.List;
 @Service
 public class EmailNotificationService {
     
-    @Autowired
+    @Autowired(required = false)
     private JavaMailSender mailSender;
     
-    @Autowired
+    @Autowired(required = false)
     private WishlistRepository wishlistRepository;
     
-    @Autowired
+    @Autowired(required = false)
     private GameRepository gameRepository;
     
-    @Autowired
+    @Autowired(required = false)
     private UserRepository userRepository;
     
     /**

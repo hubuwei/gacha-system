@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * 通知消息队列配置
  */
-@Configuration
+//@Configuration
 public class NotificationQueueConfig {
     
     public static final String NOTIFICATION_EXCHANGE = "notification.exchange";

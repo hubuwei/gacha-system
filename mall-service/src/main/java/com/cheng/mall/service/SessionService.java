@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class SessionService {
     
-    @Autowired
+    @Autowired(required = false)
     private RedisUtil redisUtil;
     
     // Session key 前缀
@@ -31,19 +31,25 @@ public class SessionService {
      * @return session token
      */
     public String createSession(Long userId) {
-        String sessionToken = UUID.randomUUID().toString().replace("-", "");
-        String sessionKey = SESSION_KEY_PREFIX + sessionToken;
-        
-        // 存储用户信息到 Redis
-        redisUtil.hSet(sessionKey, "userId", userId);
-        redisUtil.hSet(sessionKey, "createdAt", System.currentTimeMillis());
-        
-        // 设置过期时间
-        redisUtil.expire(sessionKey, SESSION_EXPIRE_HOURS, TimeUnit.HOURS);
-        
-        log.info("创建会话: userId={}, token={}", userId, sessionToken);
-        
-        return sessionToken;
+        if (redisUtil != null) {
+            String sessionToken = UUID.randomUUID().toString().replace("-", "");
+            String sessionKey = SESSION_KEY_PREFIX + sessionToken;
+            
+            // 存储用户信息到 Redis
+            redisUtil.hSet(sessionKey, "userId", userId);
+            redisUtil.hSet(sessionKey, "createdAt", System.currentTimeMillis());
+            
+            // 设置过期时间
+            redisUtil.expire(sessionKey, SESSION_EXPIRE_HOURS, TimeUnit.HOURS);
+            
+            log.info("创建会话: userId={}, token={}", userId, sessionToken);
+            
+            return sessionToken;
+        } else {
+            // Redis 未启用，返回临时 token
+            log.warn("Redis 未启用，返回临时会话 token: userId={}", userId);
+            return "temp_" + UUID.randomUUID().toString().replace("-", "");
+        }
     }
     
     /**
@@ -57,18 +63,24 @@ public class SessionService {
             return null;
         }
         
-        String sessionKey = SESSION_KEY_PREFIX + sessionToken;
-        Map<Object, Object> sessionData = redisUtil.hGetAll(sessionKey);
-        
-        if (sessionData == null || sessionData.isEmpty()) {
-            log.debug("会话不存在或已过期: {}", sessionToken);
+        if (redisUtil != null) {
+            String sessionKey = SESSION_KEY_PREFIX + sessionToken;
+            Map<Object, Object> sessionData = redisUtil.hGetAll(sessionKey);
+            
+            if (sessionData == null || sessionData.isEmpty()) {
+                log.debug("会话不存在或已过期: {}", sessionToken);
+                return null;
+            }
+            
+            // 刷新过期时间（滑动窗口）
+            redisUtil.expire(sessionKey, SESSION_EXPIRE_HOURS, TimeUnit.HOURS);
+            
+            return sessionData;
+        } else {
+            // Redis 未启用，直接返回 null
+            log.warn("Redis 未启用，会话功能不可用: {}", sessionToken);
             return null;
         }
-        
-        // 刷新过期时间（滑动窗口）
-        redisUtil.expire(sessionKey, SESSION_EXPIRE_HOURS, TimeUnit.HOURS);
-        
-        return sessionData;
     }
     
     /**
@@ -103,10 +115,14 @@ public class SessionService {
             return;
         }
         
-        String sessionKey = SESSION_KEY_PREFIX + sessionToken;
-        redisUtil.delete(sessionKey);
-        
-        log.info("销毁会话: {}", sessionToken);
+        if (redisUtil != null) {
+            String sessionKey = SESSION_KEY_PREFIX + sessionToken;
+            redisUtil.delete(sessionKey);
+            
+            log.info("销毁会话: {}", sessionToken);
+        } else {
+            log.warn("Redis 未启用，跳过会话销毁: {}", sessionToken);
+        }
     }
     
     /**

@@ -26,11 +26,11 @@ import static org.elasticsearch.index.query.QueryBuilders.*;
 @Service
 public class GameSearchService {
     
-    @Autowired
+    @Autowired(required = false)
     @Lazy  // 延迟加载,避免启动时因ES未就绪导致失败
     private GameEsRepository gameEsRepository;
     
-    @Autowired
+    @Autowired(required = false)
     private ElasticsearchOperations elasticsearchOperations;
     
     /**
@@ -57,6 +57,17 @@ public class GameSearchService {
             Double maxPrice,
             List<String> categories,
             List<String> tags) {
+        
+        if (elasticsearchOperations == null) {
+            log.warn("Elasticsearch 未启用，返回空搜索结果");
+            Map<String, Object> emptyResponse = new HashMap<>();
+            emptyResponse.put("results", Collections.emptyList());
+            emptyResponse.put("total", 0L);
+            emptyResponse.put("page", page);
+            emptyResponse.put("size", size);
+            emptyResponse.put("totalPages", 0);
+            return emptyResponse;
+        }
         
         log.info("搜索游戏 - 关键词: {}, 页码: {}, 排序: {}", keyword, page, sortBy);
         
@@ -150,6 +161,11 @@ public class GameSearchService {
      * @return 补全建议列表
      */
     public List<Map<String, Object>> autocomplete(String prefix, int size) {
+        if (elasticsearchOperations == null) {
+            log.warn("Elasticsearch 未启用，返回空自动补全结果");
+            return Collections.emptyList();
+        }
+        
         log.info("自动补全 - 前缀: {}", prefix);
         
         if (prefix == null || prefix.trim().isEmpty()) {
@@ -206,6 +222,11 @@ public class GameSearchService {
      * @return 热门游戏列表（按销量排序）
      */
     public List<Map<String, Object>> getHotSearches(int size) {
+        if (elasticsearchOperations == null) {
+            log.warn("Elasticsearch 未启用，返回空热门搜索结果");
+            return Collections.emptyList();
+        }
+        
         NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder();
         queryBuilder.withQuery(matchAllQuery());
         queryBuilder.withFilter(termQuery("isOnSale", true));
@@ -240,32 +261,48 @@ public class GameSearchService {
      * 索引单个游戏
      */
     public void indexGame(GameDocument game) {
-        gameEsRepository.save(game);
-        log.info("索引游戏成功: {}", game.getTitle());
+        if (gameEsRepository != null) {
+            gameEsRepository.save(game);
+            log.info("索引游戏成功: {}", game.getTitle());
+        } else {
+            log.warn("Elasticsearch 未启用，跳过游戏索引: {}", game.getTitle());
+        }
     }
     
     /**
      * 批量索引游戏
      */
     public void indexGames(List<GameDocument> games) {
-        gameEsRepository.saveAll(games);
-        log.info("批量索引游戏成功，数量: {}", games.size());
+        if (gameEsRepository != null) {
+            gameEsRepository.saveAll(games);
+            log.info("批量索引游戏成功，数量: {}", games.size());
+        } else {
+            log.warn("Elasticsearch 未启用，跳过批量索引，数量: {}", games.size());
+        }
     }
     
     /**
      * 删除游戏索引
      */
     public void deleteGame(Long gameId) {
-        gameEsRepository.deleteById(gameId);
-        log.info("删除游戏索引: {}", gameId);
+        if (gameEsRepository != null) {
+            gameEsRepository.deleteById(gameId);
+            log.info("删除游戏索引: {}", gameId);
+        } else {
+            log.warn("Elasticsearch 未启用，跳过删除游戏索引: {}", gameId);
+        }
     }
     
     /**
      * 重建索引
      */
     public void rebuildIndex() {
-        gameEsRepository.deleteAll();
-        log.info("已清空游戏索引");
+        if (gameEsRepository != null) {
+            gameEsRepository.deleteAll();
+            log.info("已清空游戏索引");
+        } else {
+            log.warn("Elasticsearch 未启用，跳过重建索引");
+        }
     }
     
     /**

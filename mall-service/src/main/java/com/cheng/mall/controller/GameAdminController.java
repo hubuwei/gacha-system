@@ -25,16 +25,16 @@ public class GameAdminController {
     @Autowired
     private GameRepository gameRepository;
     
-    @Autowired
+    @Autowired(required = false)
     private MessageProducer messageProducer;
     
-    @Autowired
+    @Autowired(required = false)
     private EmailNotificationService emailNotificationService;
     
-    @Autowired
+    @Autowired(required = false)
     private com.cheng.mall.mq.producer.NotificationProducer notificationProducer;
     
-    @Autowired
+    @Autowired(required = false)
     private com.cheng.mall.repository.WishlistRepository wishlistRepository;
     
     /**
@@ -53,19 +53,21 @@ public class GameAdminController {
             gameRepository.save(game);
             
             // 发送广播消息（ES 更新 + 缓存清除）
-            messageProducer.sendGameEventMessage(
-                gameId, 
-                "on", 
-                game.getTitle()
-            );
-            
-            // 记录审计日志
-            messageProducer.sendAuditLogMessage(
-                0L, // TODO: 获取管理员 ID
-                "GAME_PUBLISH",
-                "game:" + gameId,
-                "上架游戏: " + game.getTitle()
-            );
+            if (messageProducer != null) {
+                messageProducer.sendGameEventMessage(
+                    gameId, 
+                    "on", 
+                    game.getTitle()
+                );
+                
+                // 记录审计日志
+                messageProducer.sendAuditLogMessage(
+                    0L, // TODO: 获取管理员 ID
+                    "GAME_PUBLISH",
+                    "game:" + gameId,
+                    "上架游戏: " + game.getTitle()
+                );
+            }
             
             log.info("游戏已上架: gameId={}, title={}", gameId, game.getTitle());
             
@@ -93,19 +95,21 @@ public class GameAdminController {
             gameRepository.save(game);
             
             // 发送广播消息（ES 更新 + 缓存清除）
-            messageProducer.sendGameEventMessage(
-                gameId, 
-                "off", 
-                game.getTitle()
-            );
-            
-            // 记录审计日志
-            messageProducer.sendAuditLogMessage(
-                0L, // TODO: 获取管理员 ID
-                "GAME_UNPUBLISH",
-                "game:" + gameId,
-                "下架游戏: " + game.getTitle()
-            );
+            if (messageProducer != null) {
+                messageProducer.sendGameEventMessage(
+                    gameId, 
+                    "off", 
+                    game.getTitle()
+                );
+                
+                // 记录审计日志
+                messageProducer.sendAuditLogMessage(
+                    0L, // TODO: 获取管理员 ID
+                    "GAME_UNPUBLISH",
+                    "game:" + gameId,
+                    "下架游戏: " + game.getTitle()
+                );
+            }
             
             log.info("游戏已下架: gameId={}, title={}", gameId, game.getTitle());
             
@@ -204,32 +208,36 @@ public class GameAdminController {
                     gameId, oldDiscount, discountRate);
                 
                 // 异步发送邮件通知给愿望单用户
-                emailNotificationService.sendDiscountNotification(
-                    gameId, oldPrice, currentPrice, discountRate
-                );
+                if (emailNotificationService != null) {
+                    emailNotificationService.sendDiscountNotification(
+                        gameId, oldPrice, currentPrice, discountRate
+                    );
+                }
                 
                 // 通过MQ发送站内通知给所有愿望单用户
                 try {
-                    List<com.cheng.mall.entity.Wishlist> wishlists = 
-                        wishlistRepository.findByGameIdAndNotifyDiscountTrue(gameId);
-                    
-                    for (com.cheng.mall.entity.Wishlist wishlist : wishlists) {
-                        String title = "🎉 您关注的游戏降价了！";
-                        String content = String.format("%s 现在享受 %d%% 折扣，仅需 ¥%s（原价 ¥%s）",
-                            oldGame.getTitle(), discountRate, currentPrice, oldPrice);
+                    if (wishlistRepository != null && notificationProducer != null) {
+                        List<com.cheng.mall.entity.Wishlist> wishlists = 
+                            wishlistRepository.findByGameIdAndNotifyDiscountTrue(gameId);
                         
-                        notificationProducer.sendNotificationMessage(
-                            wishlist.getUserId(),
-                            "promotion",
-                            title,
-                            content,
-                            gameId,
-                            null,
-                            "game"
-                        );
+                        for (com.cheng.mall.entity.Wishlist wishlist : wishlists) {
+                            String title = "🎉 您关注的游戏降价了！";
+                            String content = String.format("%s 现在享受 %d%% 折扣，仅需 ¥%s（原价 ¥%s）",
+                                oldGame.getTitle(), discountRate, currentPrice, oldPrice);
+                            
+                            notificationProducer.sendNotificationMessage(
+                                wishlist.getUserId(),
+                                "promotion",
+                                title,
+                                content,
+                                gameId,
+                                null,
+                                "game"
+                            );
+                        }
+                        
+                        log.info("已发送 {} 条站内通知", wishlists.size());
                     }
-                    
-                    log.info("已发送 {} 条站内通知", wishlists.size());
                 } catch (Exception e) {
                     log.error("发送站内通知失败", e);
                 }
@@ -238,13 +246,15 @@ public class GameAdminController {
             }
             
             // 记录审计日志
-            messageProducer.sendAuditLogMessage(
-                0L, // TODO: 获取管理员 ID
-                "GAME_DISCOUNT_UPDATE",
-                "game:" + gameId,
-                String.format("更新游戏折扣: %s, 原价¥%s(%d%%), 新价¥%s(%d%%)",
-                    oldGame.getTitle(), oldPrice, oldDiscount, currentPrice, discountRate)
-            );
+            if (messageProducer != null) {
+                messageProducer.sendAuditLogMessage(
+                    0L, // TODO: 获取管理员 ID
+                    "GAME_DISCOUNT_UPDATE",
+                    "game:" + gameId,
+                    String.format("更新游戏折扣: %s, 原价¥%s(%d%%), 新价¥%s(%d%%)",
+                        oldGame.getTitle(), oldPrice, oldDiscount, currentPrice, discountRate)
+                );
+            }
             
             log.info("游戏折扣更新成功: gameId={}, title={}, discount={}%, price={}",
                 gameId, oldGame.getTitle(), discountRate, currentPrice);
@@ -275,15 +285,19 @@ public class GameAdminController {
                 .orElseThrow(() -> new RuntimeException("游戏不存在"));
             
             // 发送测试邮件
-            emailNotificationService.sendDiscountNotification(
-                1L, 
-                game.getBasePrice(), 
-                game.getCurrentPrice(), 
-                game.getDiscountRate()
-            );
-            
-            log.info("测试邮件发送请求已提交");
-            return CommonResponse.success("测试邮件已发送，请检查邮箱（包括垃圾箱）");
+            if (emailNotificationService != null) {
+                emailNotificationService.sendDiscountNotification(
+                    1L, 
+                    game.getBasePrice(), 
+                    game.getCurrentPrice(), 
+                    game.getDiscountRate()
+                );
+                
+                log.info("测试邮件发送请求已提交");
+                return CommonResponse.success("测试邮件已发送，请检查邮箱（包括垃圾箱）");
+            } else {
+                return CommonResponse.error("邮件服务未启用");
+            }
             
         } catch (Exception e) {
             log.error("测试邮件发送失败", e);

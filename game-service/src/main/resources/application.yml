@@ -14,9 +14,9 @@ spring:
       hibernate:
         dialect: ${JPA_DIALECT:org.hibernate.dialect.MySQL5InnoDBDialect}
   redis:
-    host: ${REDIS_HOST:localhost}
+    host: ${REDIS_HOST:111.228.12.167}
     port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:}
+    password: ${REDIS_PASSWORD:Xc037417!}
     database: ${REDIS_DATABASE:0}
     timeout: ${REDIS_TIMEOUT:5000ms}
     # Redis 不可用时的降级策略

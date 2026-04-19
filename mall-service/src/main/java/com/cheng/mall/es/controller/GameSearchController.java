@@ -23,7 +23,7 @@ public class GameSearchController {
     @Autowired
     private GameSearchService searchService;
     
-    @Autowired
+    @Autowired(required = false)
     private RedisUtil redisUtil;
     
     // 搜索限流：每秒最多10次
@@ -50,11 +50,16 @@ public class GameSearchController {
         
         // 限流检查
         String clientIp = getClientIp(request);
-        String rateLimitKey = "rate:limit:search:" + clientIp;
         
-        if (!redisUtil.checkRateLimit(rateLimitKey, SEARCH_RATE_LIMIT, SEARCH_RATE_WINDOW)) {
-            log.warn("搜索限流: IP={}", clientIp);
-            return CommonResponse.error("请求过于频繁，请稍后再试");
+        if (redisUtil != null) {
+            String rateLimitKey = "rate:limit:search:" + clientIp;
+            
+            if (!redisUtil.checkRateLimit(rateLimitKey, SEARCH_RATE_LIMIT, SEARCH_RATE_WINDOW)) {
+                log.warn("搜索限流: IP={}", clientIp);
+                return CommonResponse.error("请求过于频繁，请稍后再试");
+            }
+        } else {
+            log.warn("Redis 未启用，跳过搜索限流: IP={}", clientIp);
         }
         
         try {

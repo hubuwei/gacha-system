@@ -48,7 +48,7 @@ public class GameService {
     @Autowired
     private EmailNotificationService emailNotificationService;
     
-    @Autowired
+    @Autowired(required = false)
     private RedisUtil redisUtil;
     
     // 游戏详情缓存 key 前缀
@@ -126,10 +126,12 @@ public class GameService {
     public GameDetailDTO getGameDetail(Long gameId) {
         // 1. 尝试从缓存获取
         String cacheKey = GAME_DETAIL_CACHE_KEY + gameId;
-        Object cached = redisUtil.get(cacheKey);
-        if (cached != null) {
-            log.debug("从缓存获取游戏详情: {}", gameId);
-            return (GameDetailDTO) cached;
+        if (redisUtil != null) {
+            Object cached = redisUtil.get(cacheKey);
+            if (cached != null) {
+                log.debug("从缓存获取游戏详情: {}", gameId);
+                return (GameDetailDTO) cached;
+            }
         }
         
         log.debug("从数据库获取游戏详情: {}", gameId);
@@ -141,7 +143,9 @@ public class GameService {
         GameDetailDTO dto = buildGameDetailDTO(game, gameId);
         
         // 3. 存入缓存
-        redisUtil.set(cacheKey, dto, CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES);
+        if (redisUtil != null) {
+            redisUtil.set(cacheKey, dto, CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES);
+        }
         
         return dto;
     }
@@ -324,8 +328,10 @@ public class GameService {
         }
         
         // 清除缓存
-        String cacheKey = GAME_DETAIL_CACHE_KEY + gameId;
-        redisUtil.delete(cacheKey);
-        log.info("已清除游戏详情缓存: {}", gameId);
+        if (redisUtil != null) {
+            String cacheKey = GAME_DETAIL_CACHE_KEY + gameId;
+            redisUtil.delete(cacheKey);
+            log.info("已清除游戏详情缓存: {}", gameId);
+        }
     }
 }
