@@ -23,23 +23,17 @@ RUN cd common && mvn clean install -DskipTests && \
     cd ../auth-service && mvn clean package -DskipTests
 
 # 阶段2: 运行
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:11-jre
 
 WORKDIR /app
 
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
 COPY --from=builder /app/auth-service/target/*.jar app.jar
 
-RUN mkdir -p /app/logs /app/uploads/avatars && \
-    chown -R appuser:appuser /app
+# 创建必要的目录
+RUN mkdir -p /app/uploads/avatars /app/logs
 
-USER appuser
-
-EXPOSE 8084
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8084/actuator/health || exit 1
+# 设置权限
+RUN chmod -R 755 /app
 
 ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC"
 

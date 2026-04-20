@@ -1,0 +1,10 @@
+{"index":{"_id":"1"}}
+{"id":1,"title":"黑神话：悟空","shortDescription":"国产3A动作游戏","coverImage":"/GamePapers/black-myth-wukong.jpg","basePrice":268.00,"currentPrice":268.00,"rating":9.5,"isFeatured":true,"isOnSale":true}
+{"index":{"_id":"2"}}
+{"id":2,"title":"原神","shortDescription":"开放世界冒险游戏","coverImage":"/GamePapers/original-god.jpg","basePrice":0.00,"currentPrice":0.00,"rating":9.2,"isFeatured":true,"isOnSale":true}
+{"index":{"_id":"3"}}
+{"id":3,"title":"王者荣耀","shortDescription":"5v5 MOBA竞技游戏","coverImage":"/GamePapers/honor-of-kings.jpg","basePrice":0.00,"currentPrice":0.00,"rating":8.8,"isFeatured":true,"isOnSale":true}
+{"index":{"_id":"4"}}
+{"id":4,"title":"英雄联盟","shortDescription":"全球热门MOBA游戏","coverImage":"/GamePapers/league-of-legends.jpg","basePrice":0.00,"currentPrice":0.00,"rating":9.0,"isFeatured":true,"isOnSale":true}
+{"index":{"_id":"5"}}
+{"id":5,"title":"绝地求生","shortDescription":"大逃杀射击游戏","coverImage":"/GamePapers/pubg.jpg","basePrice":98.00,"currentPrice":98.00,"rating":8.5,"isFeatured":true,"isOnSale":true}

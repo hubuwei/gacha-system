@@ -25,6 +25,9 @@ public class VerificationCodeService {
     private static final int CODE_LENGTH = 6;
     private static final long EXPIRE_TIME = 5; // 5分钟过期
     
+    // 内存缓存，用于Redis不可用时的降级处理
+    private final java.util.Map<String, java.util.Map<String, Object>> codeCache = new java.util.concurrent.ConcurrentHashMap<>();
+    
     /**
      * 生成6位随机验证码（数字+字母）
      */
@@ -48,10 +51,22 @@ public class VerificationCodeService {
         String key = CODE_PREFIX + "sms:" + phone;
         
         // 检查是否频繁发送（60秒内只能发送一次）
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
-            Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
-            if (ttl != null && ttl > 0) {
-                throw new RuntimeException("验证码已发送，请" + ttl + "秒后再试");
+        boolean isFrequent = false;
+        try {
+            if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+                Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+                if (ttl != null && ttl > 0) {
+                    throw new RuntimeException("验证码已发送，请" + ttl + "秒后再试");
+                }
+            }
+        } catch (Exception e) {
+            // Redis不可用，使用内存缓存检查
+            java.util.Map<String, Object> codeInfo = codeCache.get(key);
+            if (codeInfo != null) {
+                long timestamp = (long) codeInfo.get("timestamp");
+                if (System.currentTimeMillis() - timestamp < 60000) { // 60秒内
+                    throw new RuntimeException("验证码已发送，请60秒后再试");
+                }
             }
         }
         
@@ -66,7 +81,16 @@ public class VerificationCodeService {
         System.out.println("========================================");
         
         // 存储到Redis，5分钟过期
-        redisTemplate.opsForValue().set(key, code, EXPIRE_TIME, TimeUnit.MINUTES);
+        try {
+            redisTemplate.opsForValue().set(key, code, EXPIRE_TIME, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            // Redis不可用，使用内存缓存
+            java.util.Map<String, Object> codeInfo = new java.util.HashMap<>();
+            codeInfo.put("code", code);
+            codeInfo.put("timestamp", System.currentTimeMillis());
+            codeCache.put(key, codeInfo);
+            System.out.println("Redis不可用，已使用内存缓存存储验证码");
+        }
     }
     
     /**
@@ -86,11 +110,30 @@ public class VerificationCodeService {
         String key = CODE_PREFIX + "email:" + email;
         
         // 检查是否频繁发送（60秒内只能发送一次）
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
-            Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
-            if (ttl != null && ttl > 0) {
-                throw new RuntimeException("验证码已发送，请" + ttl + "秒后再试");
+        boolean isFrequent = false;
+        try {
+            if (redisTemplate != null) {
+                if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+                    Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+                    if (ttl != null && ttl > 0) {
+                        isFrequent = true;
+                    }
+                }
             }
+        } catch (Exception e) {
+            // Redis不可用，使用内存缓存检查
+            System.out.println("Redis不可用，使用内存缓存检查频繁发送: " + e.getMessage());
+            java.util.Map<String, Object> codeInfo = codeCache.get(key);
+            if (codeInfo != null) {
+                long timestamp = (long) codeInfo.get("timestamp");
+                if (System.currentTimeMillis() - timestamp < 60000) { // 60秒内
+                    isFrequent = true;
+                }
+            }
+        }
+        
+        if (isFrequent) {
+            throw new RuntimeException("验证码已发送，请60秒后再试");
         }
         
         // 根据用途设置不同的邮件内容
@@ -147,7 +190,28 @@ public class VerificationCodeService {
         }
         
         // 存储到Redis，严格5分钟过期
-        redisTemplate.opsForValue().set(key, code, EXPIRE_TIME, TimeUnit.MINUTES);
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.opsForValue().set(key, code, EXPIRE_TIME, TimeUnit.MINUTES);
+                System.out.println("验证码已存储到Redis");
+            } else {
+                // Redis模板不可用，使用内存缓存
+                System.out.println("Redis模板不可用，使用内存缓存存储验证码");
+                java.util.Map<String, Object> codeInfo = new java.util.HashMap<>();
+                codeInfo.put("code", code);
+                codeInfo.put("timestamp", System.currentTimeMillis());
+                codeCache.put(key, codeInfo);
+                System.out.println("验证码已存储到内存缓存");
+            }
+        } catch (Exception e) {
+            // Redis不可用，使用内存缓存
+            System.out.println("Redis不可用，使用内存缓存存储验证码: " + e.getMessage());
+            java.util.Map<String, Object> codeInfo = new java.util.HashMap<>();
+            codeInfo.put("code", code);
+            codeInfo.put("timestamp", System.currentTimeMillis());
+            codeCache.put(key, codeInfo);
+            System.out.println("验证码已存储到内存缓存");
+        }
     }
     
     /**
@@ -155,7 +219,26 @@ public class VerificationCodeService {
      */
     public boolean verifyCode(String type, String target, String code) {
         String key = CODE_PREFIX + type + ":" + target;
-        String storedCode = redisTemplate.opsForValue().get(key);
+        String storedCode = null;
+        
+        try {
+            if (redisTemplate != null) {
+                storedCode = redisTemplate.opsForValue().get(key);
+            }
+        } catch (Exception e) {
+            // Redis不可用，从内存缓存获取
+            System.out.println("Redis不可用，从内存缓存获取验证码: " + e.getMessage());
+            java.util.Map<String, Object> codeInfo = codeCache.get(key);
+            if (codeInfo != null) {
+                storedCode = (String) codeInfo.get("code");
+                long timestamp = (long) codeInfo.get("timestamp");
+                // 检查是否过期（5分钟）
+                if (System.currentTimeMillis() - timestamp > 300000) {
+                    codeCache.remove(key);
+                    storedCode = null;
+                }
+            }
+        }
         
         if (storedCode == null) {
             throw new RuntimeException("验证码已过期或不存在，请重新获取");
@@ -166,7 +249,17 @@ public class VerificationCodeService {
         }
         
         // 验证成功后删除验证码（一次性使用）
-        redisTemplate.delete(key);
+        try {
+            if (redisTemplate != null) {
+                redisTemplate.delete(key);
+                System.out.println("验证码已从Redis删除");
+            }
+        } catch (Exception e) {
+            // Redis不可用，从内存缓存删除
+            System.out.println("Redis不可用，从内存缓存删除验证码: " + e.getMessage());
+            codeCache.remove(key);
+            System.out.println("验证码已从内存缓存删除");
+        }
         
         return true;
     }
