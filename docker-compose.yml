@@ -50,6 +50,24 @@ services:
     networks:
       - gacha-net
 
+  elasticsearch:
+    image: elasticsearch:7.17.0
+    container_name: gacha-elasticsearch
+    restart: always
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - ELASTIC_PASSWORD=Xc037417!
+      - xpack.security.enabled=true
+    volumes:
+      - ./elasticsearch/data:/usr/share/elasticsearch/data
+      - ./elasticsearch/plugins:/usr/share/elasticsearch/plugins
+    networks:
+      - gacha-net
+
   gacha-app:
     build:
       context: .
@@ -65,6 +83,8 @@ services:
       redis:
         condition: service_started
       rabbitmq:
+        condition: service_started
+      elasticsearch:
         condition: service_started
     networks:
       - gacha-net
