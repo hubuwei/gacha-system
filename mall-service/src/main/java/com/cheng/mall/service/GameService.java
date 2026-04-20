@@ -2,6 +2,8 @@ package com.cheng.mall.service;
 
 import com.cheng.mall.dto.GameDetailDTO;
 import com.cheng.mall.entity.*;
+import com.cheng.mall.es.document.GameDocument;
+import com.cheng.mall.es.repository.GameEsRepository;
 import com.cheng.mall.repository.*;
 import com.cheng.mall.util.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +12,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.Criteria;
+import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +57,12 @@ public class GameService {
     
     @Autowired(required = false)
     private RedisUtil redisUtil;
+    
+    @Autowired(required = false)
+    private GameEsRepository gameEsRepository;
+    
+    @Autowired(required = false)
+    private ElasticsearchRestTemplate elasticsearchRestTemplate;
     
     // 游戏详情缓存 key 前缀
     private static final String GAME_DETAIL_CACHE_KEY = "game:detail:";
@@ -228,6 +241,39 @@ public class GameService {
      * 搜索游戏
      */
     public List<Game> searchGames(String keyword) {
+        // 首先尝试使用Elasticsearch搜索
+        if (elasticsearchRestTemplate != null) {
+            try {
+                Criteria criteria = new Criteria()
+                    .or(Criteria.where("title").contains(keyword))
+                    .or(Criteria.where("shortDescription").contains(keyword))
+                    .or(Criteria.where("fullDescription").contains(keyword))
+                    .or(Criteria.where("developer").contains(keyword))
+                    .or(Criteria.where("publisher").contains(keyword))
+                    .or(Criteria.where("tags").contains(keyword))
+                    .or(Criteria.where("categories").contains(keyword))
+                    .or(Criteria.where("titlePinyin").contains(keyword))
+                    .or(Criteria.where("descriptionPinyin").contains(keyword));
+                
+                CriteriaQuery query = new CriteriaQuery(criteria);
+                query.setPageable(PageRequest.of(0, 100));
+                
+                SearchHits<GameDocument> searchHits = elasticsearchRestTemplate.search(query, GameDocument.class);
+                
+                List<Long> gameIds = searchHits.getSearchHits().stream()
+                    .map(SearchHit::getContent)
+                    .map(GameDocument::getId)
+                    .collect(java.util.stream.Collectors.toList());
+                
+                if (!gameIds.isEmpty()) {
+                    return gameRepository.findAllById(gameIds);
+                }
+            } catch (Exception e) {
+                log.error("Elasticsearch搜索失败，回退到数据库搜索", e);
+            }
+        }
+        
+        // 回退到数据库搜索
         return gameRepository.searchByTitle(keyword);
     }
     
@@ -304,6 +350,126 @@ public class GameService {
     }
     
     /**
+     * 同步游戏到Elasticsearch
+     */
+    public void syncGameToEs(Long gameId) {
+        if (gameEsRepository != null) {
+            try {
+                Game game = gameRepository.findById(gameId)
+                        .orElseThrow(() -> new RuntimeException("游戏不存在: " + gameId));
+                
+                // 转换为GameDocument
+                GameDocument document = new GameDocument();
+                document.setId(game.getId());
+                document.setTitle(game.getTitle());
+                document.setShortDescription(game.getShortDescription());
+                document.setFullDescription(game.getFullDescription());
+                document.setDeveloper(game.getDeveloper());
+                document.setPublisher(game.getPublisher());
+                document.setCoverImage(game.getCoverImage());
+                document.setBasePrice(game.getBasePrice() != null ? game.getBasePrice().doubleValue() : 0.0);
+                document.setCurrentPrice(game.getCurrentPrice() != null ? game.getCurrentPrice().doubleValue() : 0.0);
+                document.setDiscountRate(game.getDiscountRate());
+                document.setRating(game.getRating() != null ? game.getRating().doubleValue() : 0.0);
+                document.setRatingCount(game.getRatingCount());
+                document.setTotalSales(game.getTotalSales());
+                document.setTotalReviews(game.getTotalReviews());
+                document.setIsFeatured(game.getIsFeatured());
+                document.setIsOnSale(game.getIsOnSale());
+                document.setReleaseDate(game.getReleaseDate() != null ? game.getReleaseDate().atStartOfDay() : null);
+                document.setUpdatedAt(game.getUpdatedAt());
+                
+                // 获取分类列表
+                List<Integer> categoryIds = categoryMappingRepository.findCategoryIdsByGameId(game.getId());
+                List<String> categories = categoryIds.stream()
+                    .map(id -> categoryRepository.findById(id).map(GameCategory::getName).orElse(null))
+                    .filter(name -> name != null)
+                    .collect(java.util.stream.Collectors.toList());
+                document.setCategories(categories);
+                
+                // 获取标签列表
+                List<Integer> tagIds = tagMappingRepository.findTagIdsByGameId(game.getId());
+                List<String> tags = tagIds.stream()
+                    .map(id -> tagRepository.findById(id).map(GameTag::getName).orElse(null))
+                    .filter(name -> name != null)
+                    .collect(java.util.stream.Collectors.toList());
+                document.setTags(tags);
+                
+                // 保存到ES
+                gameEsRepository.save(document);
+                log.info("游戏同步到ES成功: {} - {}", gameId, game.getTitle());
+            } catch (Exception e) {
+                log.error("游戏同步到ES失败: {}", gameId, e);
+            }
+        }
+    }
+    
+    /**
+     * 全量同步所有游戏到Elasticsearch
+     */
+    public void syncAllGamesToEs() {
+        if (gameEsRepository != null) {
+            try {
+                List<Game> games = gameRepository.findAll();
+                List<GameDocument> documents = new ArrayList<>();
+                
+                for (Game game : games) {
+                    try {
+                        GameDocument document = new GameDocument();
+                        document.setId(game.getId());
+                        document.setTitle(game.getTitle());
+                        document.setShortDescription(game.getShortDescription());
+                        document.setFullDescription(game.getFullDescription());
+                        document.setDeveloper(game.getDeveloper());
+                        document.setPublisher(game.getPublisher());
+                        document.setCoverImage(game.getCoverImage());
+                        document.setBasePrice(game.getBasePrice() != null ? game.getBasePrice().doubleValue() : 0.0);
+                        document.setCurrentPrice(game.getCurrentPrice() != null ? game.getCurrentPrice().doubleValue() : 0.0);
+                        document.setDiscountRate(game.getDiscountRate());
+                        document.setRating(game.getRating() != null ? game.getRating().doubleValue() : 0.0);
+                        document.setRatingCount(game.getRatingCount());
+                        document.setTotalSales(game.getTotalSales());
+                        document.setTotalReviews(game.getTotalReviews());
+                        document.setIsFeatured(game.getIsFeatured());
+                        document.setIsOnSale(game.getIsOnSale());
+                        document.setReleaseDate(game.getReleaseDate() != null ? game.getReleaseDate().atStartOfDay() : null);
+                        document.setUpdatedAt(game.getUpdatedAt());
+                        
+                        // 获取分类列表
+                        List<Integer> categoryIds = categoryMappingRepository.findCategoryIdsByGameId(game.getId());
+                        List<String> categories = categoryIds.stream()
+                            .map(id -> categoryRepository.findById(id).map(GameCategory::getName).orElse(null))
+                            .filter(name -> name != null)
+                            .collect(java.util.stream.Collectors.toList());
+                        document.setCategories(categories);
+                        
+                        // 获取标签列表
+                        List<Integer> tagIds = tagMappingRepository.findTagIdsByGameId(game.getId());
+                        List<String> tags = tagIds.stream()
+                            .map(id -> tagRepository.findById(id).map(GameTag::getName).orElse(null))
+                            .filter(name -> name != null)
+                            .collect(java.util.stream.Collectors.toList());
+                        document.setTags(tags);
+                        
+                        documents.add(document);
+                    } catch (Exception e) {
+                        log.error("转换游戏数据失败: {}", game.getId(), e);
+                    }
+                }
+                
+                if (!documents.isEmpty()) {
+                    gameEsRepository.saveAll(documents);
+                    log.info("全量同步游戏到ES完成，共同步 {} 个游戏", documents.size());
+                } else {
+                    log.warn("没有游戏数据需要同步到ES");
+                }
+            } catch (Exception e) {
+                log.error("全量同步游戏到ES失败", e);
+            }
+        }
+    }
+    
+    /**
      * 更新游戏折扣（触发邮件通知）
      */
     @Transactional
@@ -319,6 +485,9 @@ public class GameService {
         game.setCurrentPrice(currentPrice);
         game.setIsOnSale(discountRate > 0);
         gameRepository.save(game);
+        
+        // 同步到ES
+        syncGameToEs(gameId);
         
         // 如果折扣率增加，发送通知
         if (discountRate > oldDiscount && discountRate > 0) {
