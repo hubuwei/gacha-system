@@ -14,11 +14,16 @@ services:
       - ./mysql/data:/var/lib/mysql
     networks:
       - gacha-net
+    # 关键1：健康检查（确保MySQL完全就绪才让后端连）
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pXc037417!"]
       interval: 5s
       timeout: 5s
-      retries: 20
+      retries: 30
+    # 关键2：永不主动删除MySQL！
+    deploy:
+      restart_policy:
+        condition: on-failure
 
   redis:
     image: redis:6
@@ -53,6 +58,7 @@ services:
     restart: always
     ports:
       - "8081:8081"
+    # 关键3：只重启后端，不碰数据库！
     depends_on:
       mysql:
         condition: service_healthy
@@ -62,6 +68,9 @@ services:
         condition: service_started
     networks:
       - gacha-net
+    # 关键4：加载.env.prod环境变量（你之前没加！）
+    env_file:
+      - .env.prod
 
 networks:
   gacha-net:
