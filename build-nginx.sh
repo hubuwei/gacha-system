@@ -7,25 +7,37 @@ echo "=========================================="
 echo "  构建和部署持久化 Nginx 配置"
 echo "=========================================="
 
-# 1. 构建自定义 Nginx 镜像
+# 1. 准备前端构建文件
 echo ""
-echo "步骤 1/5: 构建自定义 Nginx 镜像..."
+echo "步骤 1/6: 准备前端构建文件..."
+if [ ! -d "game-mall/dist" ]; then
+    echo "❌ game-mall/dist 目录不存在，请先构建前端"
+    echo "运行: cd game-mall && npm run build"
+    exit 1
+fi
+
+# 临时复制 dist 到构建上下文（避免 .dockerignore 排除）
+cp -r game-mall/dist ./nginx-dist
+
+# 2. 构建自定义 Nginx 镜像
+echo ""
+echo "步骤 2/6: 构建自定义 Nginx 镜像..."
 docker build -t gacha-nginx:with-config -f Dockerfile.nginx .
 
 # 2. 标记版本
 echo ""
-echo "步骤 2/5: 标记镜像版本..."
+echo "步骤 3/6: 标记镜像版本..."
 docker tag gacha-nginx:with-config gacha-nginx:v1
 
 # 3. 停止旧容器
 echo ""
-echo "步骤 3/5: 停止旧 Nginx 容器..."
+echo "步骤 4/6: 停止旧 Nginx 容器..."
 docker stop gacha-frontend || true
 docker rm gacha-frontend || true
 
 # 4. 启动新容器
 echo ""
-echo "步骤 4/5: 启动新的 Nginx 容器..."
+echo "步骤 5/6: 启动新的 Nginx 容器..."
 docker run -d \
   --name gacha-frontend \
   --restart always \
@@ -34,9 +46,14 @@ docker run -d \
   --network gacha-network \
   gacha-nginx:v1
 
-# 5. 等待并验证
+# 5. 清理临时文件
 echo ""
-echo "步骤 5/5: 等待 Nginx 启动并验证..."
+echo "步骤 6/6: 清理临时文件..."
+rm -rf ./nginx-dist
+
+# 6. 等待并验证
+echo ""
+echo "验证 Nginx 启动..."
 sleep 5
 
 # 检查容器状态
