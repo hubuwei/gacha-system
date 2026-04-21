@@ -6,8 +6,7 @@ LABEL description="Nginx with dynamic DNS resolution for gacha-system"
 # 复制自定义 Nginx 配置
 COPY nginx-config.conf /etc/nginx/conf.d/default.conf
 
-# 验证配置
-RUN nginx -t
+# 注意：不在构建时验证配置，因为上游服务在运行时才可用
 
 # 暴露端口
 EXPOSE 80
