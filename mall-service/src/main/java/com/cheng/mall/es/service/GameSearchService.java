@@ -1,7 +1,9 @@
 package com.cheng.mall.es.service;
 
+import com.cheng.mall.entity.Game;
 import com.cheng.mall.es.document.GameDocument;
 import com.cheng.mall.es.repository.GameEsRepository;
+import com.cheng.mall.service.GameService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -33,6 +35,9 @@ public class GameSearchService {
     @Autowired(required = false)
     private ElasticsearchOperations elasticsearchOperations;
     
+    @Autowired
+    private GameService gameService;
+    
     /**
      * 全文搜索游戏
      * 
@@ -59,14 +64,40 @@ public class GameSearchService {
             List<String> tags) {
         
         if (elasticsearchOperations == null) {
-            log.warn("Elasticsearch 未启用，返回空搜索结果");
-            Map<String, Object> emptyResponse = new HashMap<>();
-            emptyResponse.put("results", Collections.emptyList());
-            emptyResponse.put("total", 0L);
-            emptyResponse.put("page", page);
-            emptyResponse.put("size", size);
-            emptyResponse.put("totalPages", 0);
-            return emptyResponse;
+            log.warn("Elasticsearch 未启用，回退到数据库搜索");
+            // 回退到数据库搜索
+            List<Game> games = gameService.searchGames(keyword);
+            
+            // 转换为前端需要的格式
+            List<Map<String, Object>> results = games.stream()
+                .map(game -> {
+                    Map<String, Object> gameMap = new HashMap<>();
+                    gameMap.put("id", game.getId());
+                    gameMap.put("title", game.getTitle());
+                    gameMap.put("shortDescription", game.getShortDescription());
+                    gameMap.put("coverImage", game.getCoverImage());
+                    gameMap.put("basePrice", game.getBasePrice());
+                    gameMap.put("currentPrice", game.getCurrentPrice());
+                    gameMap.put("discountRate", game.getDiscountRate());
+                    gameMap.put("rating", game.getRating());
+                    gameMap.put("ratingCount", game.getRatingCount());
+                    gameMap.put("totalSales", game.getTotalSales());
+                    gameMap.put("tags", new ArrayList<>()); // 数据库搜索不支持标签过滤
+                    gameMap.put("categories", new ArrayList<>()); // 数据库搜索不支持分类过滤
+                    gameMap.put("developer", game.getDeveloper());
+                    gameMap.put("isFeatured", game.getIsFeatured());
+                    gameMap.put("score", 1.0f); // 默认相关度分数
+                    return gameMap;
+                })
+                .collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("results", results);
+            response.put("total", (long) results.size());
+            response.put("page", page);
+            response.put("size", size);
+            response.put("totalPages", (int) Math.ceil((double) results.size() / size));
+            return response;
         }
         
         log.info("搜索游戏 - 关键词: {}, 页码: {}, 排序: {}", keyword, page, sortBy);
@@ -162,8 +193,27 @@ public class GameSearchService {
      */
     public List<Map<String, Object>> autocomplete(String prefix, int size) {
         if (elasticsearchOperations == null) {
-            log.warn("Elasticsearch 未启用，返回空自动补全结果");
-            return Collections.emptyList();
+            log.warn("Elasticsearch 未启用，回退到数据库搜索");
+            // 回退到数据库搜索
+            List<Game> games = gameService.searchGames(prefix);
+            
+            // 转换为前端需要的格式
+            return games.stream()
+                .limit(size)
+                .map(game -> {
+                    Map<String, Object> suggestion = new HashMap<>();
+                    suggestion.put("id", game.getId());
+                    suggestion.put("title", game.getTitle());
+                    suggestion.put("coverImage", game.getCoverImage());
+                    suggestion.put("currentPrice", game.getCurrentPrice());
+                    suggestion.put("basePrice", game.getBasePrice());
+                    suggestion.put("discountRate", game.getDiscountRate());
+                    suggestion.put("category", "游戏"); // 数据库搜索不支持分类
+                    suggestion.put("tags", new ArrayList<>()); // 数据库搜索不支持标签
+                    suggestion.put("score", 1.0f); // 默认相关度分数
+                    return suggestion;
+                })
+                .collect(Collectors.toList());
         }
         
         log.info("自动补全 - 前缀: {}", prefix);
@@ -223,8 +273,28 @@ public class GameSearchService {
      */
     public List<Map<String, Object>> getHotSearches(int size) {
         if (elasticsearchOperations == null) {
-            log.warn("Elasticsearch 未启用，返回空热门搜索结果");
-            return Collections.emptyList();
+            log.warn("Elasticsearch 未启用，回退到数据库搜索");
+            // 回退到数据库搜索，获取所有游戏并按销量排序
+            List<Map<String, Object>> allGames = gameService.getGamesWithTags();
+            
+            // 按销量降序排序并限制数量
+            return allGames.stream()
+                .sorted((g1, g2) -> {
+                    long sales1 = (long) g1.getOrDefault("totalSales", 0);
+                    long sales2 = (long) g2.getOrDefault("totalSales", 0);
+                    return Long.compare(sales2, sales1);
+                })
+                .limit(size)
+                .map(game -> {
+                    Map<String, Object> hotGame = new HashMap<>();
+                    hotGame.put("id", game.get("id"));
+                    hotGame.put("title", game.get("title"));
+                    hotGame.put("coverImage", game.get("coverImage"));
+                    hotGame.put("currentPrice", game.get("currentPrice"));
+                    hotGame.put("totalSales", game.get("totalSales"));
+                    return hotGame;
+                })
+                .collect(Collectors.toList());
         }
         
         NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder();
