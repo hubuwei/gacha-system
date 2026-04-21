@@ -8,10 +8,6 @@
       "ik_smart": {
         "type": "custom",
         "tokenizer": "ik_smart"
-      },
-      "pinyin_analyzer": {
-        "type": "custom",
-        "tokenizer": "pinyin_tokenizer"
       }
     },
     "tokenizer": {
@@ -22,15 +18,6 @@
       "ik_smart": {
         "type": "ik_smart",
         "use_smart": true
-      },
-      "pinyin_tokenizer": {
-        "type": "pinyin",
-        "keep_first_letter": true,
-        "keep_full_pinyin": true,
-        "keep_original": true,
-        "limit_first_letter_length": 16,
-        "lowercase": true,
-        "remove_duplicated_term": true
       }
     }
   }

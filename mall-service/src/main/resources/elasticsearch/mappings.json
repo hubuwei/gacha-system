@@ -84,11 +84,13 @@
     },
     "titlePinyin": {
       "type": "text",
-      "analyzer": "pinyin_analyzer"
+      "analyzer": "ik_max_word",
+      "search_analyzer": "ik_smart"
     },
     "descriptionPinyin": {
       "type": "text",
-      "analyzer": "pinyin_analyzer"
+      "analyzer": "ik_max_word",
+      "search_analyzer": "ik_smart"
     }
   }
 }

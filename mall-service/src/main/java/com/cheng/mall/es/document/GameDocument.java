@@ -142,11 +142,11 @@ public class GameDocument {
     private LocalDateTime updatedAt;
     
     /**
-     * 拼音字段（用于拼音搜索）
+     * 拼音字段（暂时使用IK分词器，等待pinyin插件安装）
      */
-    @Field(type = FieldType.Text, analyzer = "pinyin_analyzer")
+    @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
     private String titlePinyin;
     
-    @Field(type = FieldType.Text, analyzer = "pinyin_analyzer")
+    @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
     private String descriptionPinyin;
 }
