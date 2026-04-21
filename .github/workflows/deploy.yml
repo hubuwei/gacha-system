@@ -30,6 +30,10 @@ jobs:
           script: |
             cd /opt/gacha-system
             git pull
-            # 只重新构建和启动后端！不碰数据库！
-            docker compose up -d --build gacha-app
-            echo "✅ 只更新后端，MySQL/Redis不重启！"
+            # 重新构建和启动所有服务（包括ES）
+            docker compose up -d --build
+            echo "✅ 后端和中间件已更新！"
+            # 等待服务启动
+            sleep 15
+            # 同步游戏数据到ES
+            curl -X POST http://localhost:8081/api/sync/games || echo "ES同步失败，请手动执行"

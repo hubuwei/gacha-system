@@ -88,9 +88,30 @@ services:
         condition: service_started
     networks:
       - gacha-net
-    # 关键4：加载.env.prod环境变量（你之前没加！）
+    # 关键4：加载.env.prod环境变量（持久化配置）
     env_file:
       - .env.prod
+    environment:
+      # Elasticsearch配置（持久化到docker-compose，防止重启丢失）
+      - ELASTICSEARCH_ENABLED=true
+      - ES_URIS=http://gacha-elasticsearch:9200
+      - ES_USERNAME=elastic
+      - ES_PASSWORD=Xc037417!
+      # 数据库配置
+      - DB_HOST=gacha-mysql
+      - DB_PORT=3306
+      - DB_NAME=gacha_system_prod
+      - DB_USERNAME=root
+      - DB_PASSWORD=Xc037417!
+      # Redis配置
+      - REDIS_HOST=gacha-redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=Xc037417!
+      # RabbitMQ配置
+      - RABBITMQ_HOST=gacha-rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=admin
+      - RABBITMQ_PASSWORD=Xc037417!
 
 networks:
   gacha-net:
