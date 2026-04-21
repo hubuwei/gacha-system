@@ -3,6 +3,9 @@ FROM nginx:latest
 LABEL maintainer="gacha-system"
 LABEL description="Nginx with dynamic DNS resolution for gacha-system"
 
+# 复制前端构建文件
+COPY game-mall/dist/ /usr/share/nginx/html/
+
 # 复制自定义 Nginx 配置
 COPY nginx-config.conf /etc/nginx/conf.d/default.conf
 
