@@ -1082,7 +1082,7 @@ function App({ onUserLogin, onUserLogout }) {
           </div>
           
           <div className="navbar-categories">
-            <div className="search-box">
+            <div className="search-box" style={{ position: 'relative' }}>
               <span className="search-icon">🔍</span>
               <input 
                 type="text" 
@@ -1093,9 +1093,16 @@ function App({ onUserLogin, onUserLogout }) {
                 className="search-input"
               />
               
-              {/* 搜索建议下拉框 */}
+              {/* 搜索建议下拉框 - 使用portal确保不被遮挡 */}
               {showSuggestions && searchSuggestions.length > 0 && (
-                <div className="search-suggestions">
+                <div className="search-suggestions" style={{ 
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  zIndex: 9999,
+                  marginTop: '8px'
+                }}>
                   {searchSuggestions.map((suggestion) => (
                     <div 
                       key={suggestion.id} 
