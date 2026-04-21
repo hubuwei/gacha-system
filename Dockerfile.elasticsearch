@@ -1,0 +1,11 @@
+FROM elasticsearch:7.17.29
+
+# 安装 IK 分词器
+RUN elasticsearch-plugin install --batch https://github.com/infinilabs/analysis-ik/releases/download/v7.17.29/elasticsearch-analysis-ik-7.17.29.zip || \
+    elasticsearch-plugin install --batch https://get.infini.cloud/elasticsearch/analysis-ik/7.17.29 || \
+    echo "IK plugin installation failed, will try manual installation"
+
+# 安装拼音分词器
+RUN elasticsearch-plugin install --batch https://github.com/infinilabs/analysis-pinyin/releases/download/v7.17.29/elasticsearch-analysis-pinyin-7.17.29.zip || \
+    elasticsearch-plugin install --batch https://get.infini.cloud/elasticsearch/analysis-pinyin/7.17.29 || \
+    echo "Pinyin plugin installation failed, will try manual installation"
