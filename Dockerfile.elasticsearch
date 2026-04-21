@@ -1,11 +1,25 @@
 FROM elasticsearch:7.17.29
 
-# 安装 IK 分词器
-RUN elasticsearch-plugin install --batch https://github.com/infinilabs/analysis-ik/releases/download/v7.17.29/elasticsearch-analysis-ik-7.17.29.zip || \
-    elasticsearch-plugin install --batch https://get.infini.cloud/elasticsearch/analysis-ik/7.17.29 || \
-    echo "IK plugin installation failed, will try manual installation"
+LABEL maintainer="gacha-system"
+LABEL description="Elasticsearch with IK and Pinyin analyzers for Chinese search"
 
-# 安装拼音分词器
-RUN elasticsearch-plugin install --batch https://github.com/infinilabs/analysis-pinyin/releases/download/v7.17.29/elasticsearch-analysis-pinyin-7.17.29.zip || \
-    elasticsearch-plugin install --batch https://get.infini.cloud/elasticsearch/analysis-pinyin/7.17.29 || \
-    echo "Pinyin plugin installation failed, will try manual installation"
+# 设置环境变量
+ENV ES_JAVA_OPTS="-Xms1g -Xmx1g"
+ENV discovery.type=single-node
+ENV xpack.security.enabled=false
+
+# 安装 IK 分词器（使用infini.cloud官方CDN）
+RUN elasticsearch-plugin install --batch https://get.infini.cloud/elasticsearch/analysis-ik/7.17.29
+
+# 安装拼音分词器（使用infini.cloud官方CDN）
+RUN elasticsearch-plugin install --batch https://get.infini.cloud/elasticsearch/analysis-pinyin/7.17.29
+
+# 验证插件安装
+RUN elasticsearch-plugin list
+
+# 暴露端口
+EXPOSE 9200 9300
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --retries=5 \
+  CMD curl -f http://localhost:9200/_cluster/health || exit 1

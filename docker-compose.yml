@@ -51,7 +51,9 @@ services:
       - gacha-net
 
   elasticsearch:
-    image: elasticsearch:7.17.0
+    build:
+      context: .
+      dockerfile: Dockerfile.elasticsearch
     container_name: gacha-elasticsearch
     restart: always
     ports:
@@ -60,13 +62,16 @@ services:
     environment:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
-      - ELASTIC_PASSWORD=Xc037417!
-      - xpack.security.enabled=true
+      - xpack.security.enabled=false
     volumes:
       - ./elasticsearch/data:/usr/share/elasticsearch/data
-      - ./elasticsearch/plugins:/usr/share/elasticsearch/plugins
     networks:
       - gacha-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   gacha-app:
     build:
