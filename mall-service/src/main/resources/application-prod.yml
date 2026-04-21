@@ -72,7 +72,7 @@ spring:
   data:
     elasticsearch:
       repositories:
-        enabled: false  # 禁用Repository自动初始化,避免启动时连接失败
+        enabled: true  # 启用Repository自动初始化,支持Elasticsearch仓库
 
 # Elasticsearch 启用开关（用于条件注解）
 elasticsearch:
