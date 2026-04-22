@@ -55,14 +55,30 @@ public class WalletService {
     }
 
     /**
-     * 用户充值
+     * 用户充值（优化版 - 增加更多验证和返回信息）
      */
     @Transactional
     public Map<String, Object> recharge(Long userId, BigDecimal amount, String paymentMethod) {
+        // 参数验证
+        if (userId == null || userId <= 0) {
+            throw new IllegalArgumentException("用户ID无效");
+        }
+        
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("充值金额必须大于0");
         }
+        
+        // 限制单笔充值金额范围（1-10000元）
+        if (amount.compareTo(new BigDecimal("1")) < 0 || amount.compareTo(new BigDecimal("10000")) > 0) {
+            throw new IllegalArgumentException("充值金额范围为1-10000元");
+        }
+        
+        // 验证支付方式
+        if (paymentMethod == null || paymentMethod.trim().isEmpty()) {
+            paymentMethod = "balance"; // 默认使用测试模式
+        }
 
+        // 获取或创建钱包
         UserWallet wallet = userWalletRepository.findByUserId(userId)
             .orElseGet(() -> {
                 UserWallet newWallet = new UserWallet();
@@ -74,15 +90,19 @@ public class WalletService {
                 return userWalletRepository.save(newWallet);
             });
 
+        // 记录充值前余额
         BigDecimal balanceBefore = wallet.getBalance();
         BigDecimal balanceAfter = balanceBefore.add(amount);
 
+        // 更新钱包余额和累计充值金额
         wallet.setBalance(balanceAfter);
         wallet.setTotalRecharge(wallet.getTotalRecharge().add(amount));
         userWalletRepository.save(wallet);
 
+        // 生成充值单号：RCH + 时间戳 + 4位随机数
         String rechargeNo = "RCH" + System.currentTimeMillis() + String.format("%04d", (int)(Math.random() * 10000));
 
+        // 创建交易记录
         Transaction transaction = new Transaction();
         transaction.setUserId(userId);
         transaction.setTransactionType("recharge");
@@ -95,13 +115,19 @@ public class WalletService {
         transaction.setTransactionStatus("completed");
         transactionRepository.save(transaction);
 
+        // 构建详细的返回结果
         Map<String, Object> result = new HashMap<>();
         result.put("transactionId", transaction.getId());
         result.put("rechargeNo", rechargeNo);
         result.put("amount", amount);
         result.put("balanceBefore", balanceBefore);
         result.put("balanceAfter", balanceAfter);
+        result.put("paymentMethod", paymentMethod);
+        result.put("transactionStatus", "completed");
         result.put("createdAt", transaction.getCreatedAt());
+        
+        log.info("用户 {} 充值成功，金额: {}, 充值单号: {}, 充值前余额: {}, 充值后余额: {}", 
+                 userId, amount, rechargeNo, balanceBefore, balanceAfter);
 
         return result;
     }

@@ -14,13 +14,18 @@ function WalletRecharge({ currentUser, userBalance, onRechargeSuccess }) {
   const handleRecharge = async () => {
     const rechargeAmount = parseFloat(amount)
     
+    // 验证充值金额
     if (!rechargeAmount || rechargeAmount <= 0) {
-      alert('请输入有效的充值金额')
+      window.dispatchEvent(new CustomEvent('showError', {
+        detail: { title: '❌ 充值失败', message: '请输入有效的充值金额', duration: 3000 }
+      }))
       return
     }
 
     if (rechargeAmount < 1 || rechargeAmount > 10000) {
-      alert('充值金额范围为 1-10000 元')
+      window.dispatchEvent(new CustomEvent('showError', {
+        detail: { title: '❌ 充值失败', message: '充值金额范围为 1-10000 元', duration: 3000 }
+      }))
       return
     }
 
@@ -45,21 +50,29 @@ function WalletRecharge({ currentUser, userBalance, onRechargeSuccess }) {
 
       const result = await response.json()
 
-      if (result.code === 200) {
-        // 根据支付方式显示不同的提示
+      if (result.code === 200 && result.data) {
+        const rechargeData = result.data
+        
+        // 构建详细的成功消息
         let successMessage = ''
+        let successTitle = '✅ 充值成功'
+        
         if (paymentMethod === 'balance') {
-          successMessage = `已充值 ￥${rechargeAmount.toFixed(2)}，余额已更新`
+          successMessage = `充值单号：${rechargeData.rechargeNo}\n充值金额：￥${rechargeData.amount.toFixed(2)}\n充值前余额：￥${rechargeData.balanceBefore.toFixed(2)}\n充值后余额：￥${rechargeData.balanceAfter.toFixed(2)}\n状态：已到账`
         } else if (paymentMethod === 'alipay') {
-          successMessage = `演示模式 - 已模拟支付宝充值 ￥${rechargeAmount.toFixed(2)}`
+          successMessage = `演示模式 - 支付宝充值\n充值单号：${rechargeData.rechargeNo}\n充值金额：￥${rechargeData.amount.toFixed(2)}\n状态：已到账`
         // TODO: 微信支付已注释
         /* } else if (paymentMethod === 'wechat') {
-          successMessage = `演示模式 - 已模拟微信充值 ￥${rechargeAmount.toFixed(2)}` */
+          successMessage = `演示模式 - 微信充值\n充值单号：${rechargeData.rechargeNo}\n充值金额：￥${rechargeData.amount.toFixed(2)}\n状态：已到账` */
         }
         
-        // 先显示成功通知
+        // 显示成功通知（增加持续时间）
         window.dispatchEvent(new CustomEvent('showSuccess', {
-          detail: { title: '✅ 充值成功', message: successMessage, duration: 5000 }
+          detail: { 
+            title: successTitle, 
+            message: successMessage, 
+            duration: 8000  // 增加到8秒，让用户看清详细信息
+          }
         }))
         
         // 刷新余额
@@ -67,19 +80,25 @@ function WalletRecharge({ currentUser, userBalance, onRechargeSuccess }) {
           await onRechargeSuccess(rechargeAmount)
         }
         
-        // 延迟跳转，让用户看到提示
+        // 延迟跳转，让用户看到提示信息
         setTimeout(() => {
           navigate('/profile')
-        }, 1500)
+        }, 2000)  // 增加到2秒
       } else {
+        // 处理后端返回的错误信息
+        const errorMsg = result.message || '充值失败，请稍后重试'
         window.dispatchEvent(new CustomEvent('showError', {
-          detail: { title: '充值失败', message: result.message, duration: 3000 }
+          detail: { title: '❌ 充值失败', message: errorMsg, duration: 4000 }
         }))
       }
     } catch (error) {
       console.error('充值错误:', error)
       window.dispatchEvent(new CustomEvent('showError', {
-        detail: { title: '充值失败', message: error.message, duration: 3000 }
+        detail: { 
+          title: '❌ 充值失败', 
+          message: error.message || '网络异常，请检查网络连接后重试', 
+          duration: 4000 
+        }
       }))
     } finally {
       setProcessing(false)
