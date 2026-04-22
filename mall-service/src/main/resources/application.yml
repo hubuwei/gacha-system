@@ -30,11 +30,33 @@ spring:
         format_sql: true
     open-in-view: false
 
-  # ========================== 本地全部关闭，不连接 ==========================
+  # ========================== Redis 和 RabbitMQ（连接服务器）==========================
   redis:
-    enabled: false
+    enabled: true
+    host: ${REDIS_HOST:111.228.12.167}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:Xc037417!}
+    database: ${REDIS_DATABASE:0}
+    timeout: 3000
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1
+  
   rabbitmq:
-    enabled: false
+    enabled: true
+    host: ${RABBITMQ_HOST:111.228.12.167}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:admin}
+    password: ${RABBITMQ_PASSWORD:Xc037417!}
+    virtual-host: /
+    listener:
+      simple:
+        acknowledge-mode: manual
+        concurrency: 3
+        max-concurrency: 10
 
   autoconfigure:
     exclude:
