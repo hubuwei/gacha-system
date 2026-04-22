@@ -3,8 +3,6 @@ package com.cheng.mall;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.ComponentScan;
@@ -16,8 +14,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(exclude = {
-        RedisAutoConfiguration.class,
-        RedisRepositoriesAutoConfiguration.class,
         RabbitAutoConfiguration.class
 })
 @EntityScan(basePackages = {
@@ -28,9 +24,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         "com.cheng.mall.repository",
         "com.cheng.common.repository"
 })
-@EnableElasticsearchRepositories(basePackages = {
-        "com.cheng.mall.es.repository"
-})
+// @EnableElasticsearchRepositories(basePackages = {
+//         "com.cheng.mall.es.repository"
+// })  // 本地开发时禁用ES，使用服务器ES时取消注释
 @EnableCaching
 @EnableAsync
 @EnableScheduling

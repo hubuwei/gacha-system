@@ -39,30 +39,34 @@ public class OrderTimeoutService {
      */
     @PostConstruct
     public void initKeySpaceListener() {
-        if (redisMessageListenerContainer != null) {
-            // 监听 __keyevent@0__:expired 事件（key 过期事件）
-            redisMessageListenerContainer.addMessageListener(new MessageListener() {
-                @Override
-                public void onMessage(Message message, byte[] pattern) {
-                    String expiredKey = new String(message.getBody(), StandardCharsets.UTF_8);
-                    log.info("Redis Key 过期: {}", expiredKey);
-                    
-                    // 检查是否是订单超时 key
-                    if (expiredKey.startsWith(ORDER_TIMEOUT_KEY) && 
-                        !expiredKey.contains("remind")) {
-                        // 提取订单号
-                        String orderNo = expiredKey.substring(ORDER_TIMEOUT_KEY.length());
-                        log.info("订单超时，准备取消: orderNo={}", orderNo);
+        if (redisMessageListenerContainer != null && redisTemplate != null) {
+            try {
+                // 监听 __keyevent@0__:expired 事件（key 过期事件）
+                redisMessageListenerContainer.addMessageListener(new MessageListener() {
+                    @Override
+                    public void onMessage(Message message, byte[] pattern) {
+                        String expiredKey = new String(message.getBody(), StandardCharsets.UTF_8);
+                        log.info("Redis Key 过期: {}", expiredKey);
                         
-                        // 异步取消订单
-                        cancelExpiredOrder(orderNo);
+                        // 检查是否是订单超时 key
+                        if (expiredKey.startsWith(ORDER_TIMEOUT_KEY) && 
+                            !expiredKey.contains("remind")) {
+                            // 提取订单号
+                            String orderNo = expiredKey.substring(ORDER_TIMEOUT_KEY.length());
+                            log.info("订单超时，准备取消: orderNo={}", orderNo);
+                            
+                            // 异步取消订单
+                            cancelExpiredOrder(orderNo);
+                        }
                     }
-                }
-            }, new PatternTopic("__keyevent@0__:expired"));
-            
-            log.info("Redis 键空间通知监听器已启动");
+                }, new PatternTopic("__keyevent@0__:expired"));
+                
+                log.info("Redis 键空间通知监听器已启动");
+            } catch (Exception e) {
+                log.warn("Redis 键空间通知监听器启动失败，将使用定时任务方式: {}", e.getMessage());
+            }
         } else {
-            log.warn("Redis 未启用，跳过键空间通知监听器初始化");
+            log.warn("Redis 未启用或不可用，跳过键空间通知监听器初始化，将使用定时任务方式");
         }
     }
     

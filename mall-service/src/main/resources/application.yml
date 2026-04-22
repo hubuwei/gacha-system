@@ -30,14 +30,14 @@ spring:
         format_sql: true
     open-in-view: false
 
-  # ========================== Redis 和 RabbitMQ（连接服务器）==========================
+  # ========================== Redis 和 RabbitMQ（支持本地和线上）==========================
   redis:
-    enabled: true
+    enabled: ${REDIS_ENABLED:true}
     host: ${REDIS_HOST:111.228.12.167}
     port: ${REDIS_PORT:6379}
     password: ${REDIS_PASSWORD:Xc037417!}
     database: ${REDIS_DATABASE:0}
-    timeout: 3000
+    timeout: 5000
     lettuce:
       pool:
         max-active: 8
@@ -46,7 +46,7 @@ spring:
         max-wait: -1
   
   rabbitmq:
-    enabled: true
+    enabled: ${RABBITMQ_ENABLED:true}
     host: ${RABBITMQ_HOST:111.228.12.167}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:admin}
@@ -63,6 +63,7 @@ spring:
       - org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration
       - org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration
       - org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.elasticsearch.ReactiveElasticsearchRepositoriesAutoConfiguration
 
   cache:
     type: simple

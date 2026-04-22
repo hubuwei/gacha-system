@@ -1,4 +1,4 @@
-FROM elasticsearch:7.17.29
+FROM docker.elastic.co/elasticsearch/elasticsearch:7.17.29
 
 LABEL maintainer="gacha-system"
 LABEL description="Elasticsearch with IK and Pinyin analyzers for Chinese search"
