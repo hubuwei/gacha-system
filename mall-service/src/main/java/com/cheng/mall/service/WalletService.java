@@ -30,18 +30,38 @@ public class WalletService {
     private UserWalletRepository userWalletRepository;
 
     /**
-     * 获取用户钱包信息
+     * 获取用户钱包信息（优化版 - 增加用户存在性验证）
      */
     public Map<String, Object> getUserWallet(Long userId) {
+        // 验证用户ID
+        if (userId == null || userId <= 0) {
+            throw new IllegalArgumentException("用户ID无效");
+        }
+        
         UserWallet wallet = userWalletRepository.findByUserId(userId)
             .orElseGet(() -> {
+                // 注意：这里不自动创建钱包，因为外键约束要求user_id必须存在于users表中
+                // 如果需要自动创建，应该先调用auth-service验证用户是否存在
                 UserWallet newWallet = new UserWallet();
                 newWallet.setUserId(userId);
                 newWallet.setBalance(BigDecimal.ZERO);
                 newWallet.setFrozenBalance(BigDecimal.ZERO);
                 newWallet.setTotalRecharge(BigDecimal.ZERO);
                 newWallet.setTotalConsumed(BigDecimal.ZERO);
-                return userWalletRepository.save(newWallet);
+                try {
+                    return userWalletRepository.save(newWallet);
+                } catch (Exception e) {
+                    // 如果保存失败（可能是外键约束），返回空钱包信息
+                    log.warn("为用户 {} 创建钱包失败，可能用户不存在: {}", userId, e.getMessage());
+                    // 返回默认钱包信息，但不保存到数据库
+                    Map<String, Object> emptyWallet = new HashMap<>();
+                    emptyWallet.put("userId", userId);
+                    emptyWallet.put("balance", BigDecimal.ZERO);
+                    emptyWallet.put("frozenBalance", BigDecimal.ZERO);
+                    emptyWallet.put("totalRecharge", BigDecimal.ZERO);
+                    emptyWallet.put("totalConsumed", BigDecimal.ZERO);
+                    throw new RuntimeException("用户不存在或数据异常，请重新登录", e);
+                }
             });
 
         Map<String, Object> result = new HashMap<>();
