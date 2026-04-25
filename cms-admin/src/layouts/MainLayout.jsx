@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, Menu, Avatar, Dropdown } from 'antd';
 import {
   DashboardOutlined,
@@ -22,6 +22,15 @@ const MainLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
 
   const adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}');
+
+  // 确保URL以斜杠结尾，避免Vite 404错误
+  useEffect(() => {
+    const path = window.location.pathname;
+    // 如果路径是 /cms 而不是 /cms/，重定向到 /cms/
+    if (path === '/cms') {
+      window.location.replace('/cms/');
+    }
+  }, []);
 
   const menuItems = [
     {
