@@ -259,4 +259,31 @@ public class FriendController {
         Page<Map<String, Object>> reviews = friendService.getFriendReviews(friendUid, page, size);
         return CommonResponse.success(reviews);
     }
+    
+    // ==================== 好友动态接口 ====================
+    
+    /**
+     * Get friend activities feed
+     */
+    @GetMapping("/activities")
+    public CommonResponse<Page<Map<String, Object>>> getFriendActivities(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        // TODO: Get current user ID from JWT Token
+        Long uid = 1L;
+        Page<Map<String, Object>> activities = friendService.getFriendActivities(uid, page, size);
+        return CommonResponse.success(activities);
+    }
+    
+    /**
+     * Manually publish activity
+     */
+    @PostMapping("/activity")
+    public CommonResponse<Void> publishActivity(
+            @RequestParam String content,
+            @RequestParam(required = false) Long gameId) {
+        // TODO: Get current user ID from JWT Token
+        Long uid = 1L;
+        return friendService.publishActivity(uid, content, gameId);
+    }
 }

@@ -31,6 +31,7 @@ public class FriendService {
     private final FriendBlacklistRepository blacklistRepository;
     private final OrderRepository orderRepository;
     private final GameReviewRepository reviewRepository;
+    private final FriendActivityRepository activityRepository;
 
     // 缓存已禁用，直接使用数据库查询
     private static final boolean CACHE_ENABLED = false;
@@ -174,6 +175,12 @@ public class FriendService {
         
         // 发送通知给申请人
         notificationService.sendFriendAcceptedNotification(apply.getApplyUid(), currentUid);
+        
+        // 记录动态
+        recordActivity(apply.getApplyUid(), "FRIEND_ADDED", 
+            "成为了好友", null, null);
+        recordActivity(currentUid, "FRIEND_ADDED", 
+            "成为了好友", null, null);
         
         log.info("用户 {} 同意了用户 {} 的好友申请", currentUid, apply.getApplyUid());
         return CommonResponse.success(null);
@@ -496,5 +503,92 @@ public class FriendService {
             map.put("gameTitle", "游戏" + review.getGameId());
             return map;
         });
+    }
+    
+    // ==================== 好友动态系统 ====================
+    
+    /**
+     * Record activity
+     */
+    @Transactional
+    public void recordActivity(Long uid, String type, String content, Long gameId, String metadata) {
+        FriendActivity activity = new FriendActivity();
+        activity.setUid(uid);
+        activity.setType(type);
+        activity.setContent(content);
+        activity.setGameId(gameId);
+        activity.setMetadata(metadata);
+        activityRepository.save(activity);
+        log.info("记录用户 {} 的动态: {}", uid, type);
+    }
+    
+    /**
+     * Get friend activities feed
+     */
+    public Page<Map<String, Object>> getFriendActivities(Long uid, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        
+        // Get current user's friends
+        List<UserFriend> friends = friendRepository.findByUidAndStatus(uid, 1);
+        if (friends.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        
+        List<Long> friendUids = friends.stream()
+            .map(UserFriend::getFriendUid)
+            .collect(Collectors.toList());
+        
+        // Get activities from all friends
+        // Note: JPA doesn't support IN with Page directly, so we fetch and paginate manually
+        List<FriendActivity> allActivities = new ArrayList<>();
+        for (Long friendUid : friendUids) {
+            List<FriendActivity> activities = activityRepository.findByUidOrderByCreatedAtDesc(
+                friendUid, Pageable.unpaged()).getContent();
+            allActivities.addAll(activities);
+        }
+        
+        // Sort by createdAt desc
+        allActivities.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+        
+        // Manual pagination
+        int start = (page - 1) * size;
+        int end = Math.min(start + size, allActivities.size());
+        List<FriendActivity> pagedActivities = start < allActivities.size() 
+            ? allActivities.subList(start, end) 
+            : Collections.emptyList();
+        
+        long total = allActivities.size();
+        
+        return new org.springframework.data.domain.PageImpl<>(
+            pagedActivities.stream().map(activity -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", activity.getId());
+                map.put("uid", activity.getUid());
+                map.put("type", activity.getType());
+                map.put("content", activity.getContent());
+                map.put("gameId", activity.getGameId());
+                map.put("metadata", activity.getMetadata());
+                map.put("createdAt", activity.getCreatedAt());
+                // TODO: Call auth-service API to get username and avatar
+                map.put("username", "用户" + activity.getUid());
+                map.put("avatar", null);
+                // TODO: Call game-service API to get game title
+                if (activity.getGameId() != null) {
+                    map.put("gameTitle", "游戏" + activity.getGameId());
+                }
+                return map;
+            }).collect(Collectors.toList()),
+            pageable,
+            total
+        );
+    }
+    
+    /**
+     * Manually publish activity
+     */
+    @Transactional
+    public CommonResponse<Void> publishActivity(Long uid, String content, Long gameId) {
+        recordActivity(uid, "CUSTOM", content, gameId, null);
+        return CommonResponse.success(null);
     }
 }
