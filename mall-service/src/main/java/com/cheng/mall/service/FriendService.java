@@ -1,14 +1,8 @@
 package com.cheng.mall.service;
 
 import com.cheng.common.dto.CommonResponse;
-import com.cheng.mall.entity.FriendApply;
-import com.cheng.mall.entity.FriendBlacklist;
-import com.cheng.mall.entity.UserFriend;
-import com.cheng.mall.entity.UserOnlineStatus;
-import com.cheng.mall.repository.FriendApplyRepository;
-import com.cheng.mall.repository.FriendBlacklistRepository;
-import com.cheng.mall.repository.UserFriendRepository;
-import com.cheng.mall.repository.UserOnlineStatusRepository;
+import com.cheng.mall.entity.*;
+import com.cheng.mall.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -35,6 +29,8 @@ public class FriendService {
     private final UserOnlineStatusRepository onlineStatusRepository;
     private final NotificationService notificationService;
     private final FriendBlacklistRepository blacklistRepository;
+    private final OrderRepository orderRepository;
+    private final GameReviewRepository reviewRepository;
 
     // 缓存已禁用，直接使用数据库查询
     private static final boolean CACHE_ENABLED = false;
@@ -423,5 +419,82 @@ public class FriendService {
      */
     private boolean isBlocked(Long uid, Long targetUid) {
         return blacklistRepository.findByUidAndBlockedUid(uid, targetUid).isPresent();
+    }
+    
+    // ==================== 好友资料查看 ====================
+    
+    /**
+     * 获取好友的游戏库（已购买游戏）
+     */
+    public Page<Map<String, Object>> getFriendGames(Long friendUid, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+            
+        // 从订单表查询该用户已购买的订单
+        Page<Order> orders = orderRepository.findByUserId(friendUid, pageable);
+            
+        return orders.map(order -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("orderId", order.getId());
+            map.put("orderNo", order.getOrderNo());
+            map.put("purchaseTime", order.getCreatedAt());
+            map.put("totalAmount", order.getTotalAmount());
+            map.put("actualAmount", order.getActualAmount());
+            map.put("paymentStatus", order.getPaymentStatus());
+            map.put("orderStatus", order.getOrderStatus());
+            // TODO: 通过 OrderItem 查询具体游戏，调用 game-service API获取游戏详情
+            map.put("games", "待实现：需关联OrderItem表");
+            return map;
+        });
+    }
+    
+    /**
+     * 获取好友的最近游玩记录
+     */
+    public List<Map<String, Object>> getFriendRecentGames(Long friendUid, int limit) {
+        // 从user_online_status表查询最近玩过的游戏
+        // 注意：这里需要历史记录，当前表只保留最新状态
+        // 简化实现：返回当前正在玩的游戏
+        UserOnlineStatus status = onlineStatusRepository.findByUid(friendUid).orElse(null);
+        
+        List<Map<String, Object>> result = new ArrayList<>();
+        if (status != null && status.getGameId() != null && status.getStatus() == 3) {
+            Map<String, Object> game = new HashMap<>();
+            game.put("gameId", status.getGameId());
+            game.put("status", "游戏中");
+            game.put("updateTime", status.getUpdateTime());
+            // TODO: 调用game-service API获取游戏详情
+            game.put("gameTitle", "游戏" + status.getGameId());
+            result.add(game);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 获取好友的游戏评测
+     */
+    public Page<Map<String, Object>> getFriendReviews(Long friendUid, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+            
+        // 查询该用户发布的评测
+        Page<GameReview> reviews = reviewRepository.findByUserIdOrderByCreatedAtDesc(friendUid, pageable);
+            
+        return reviews.map(review -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("reviewId", review.getId());
+            map.put("gameId", review.getGameId());
+            map.put("rating", review.getRating());
+            map.put("title", review.getTitle());
+            map.put("content", review.getContent());
+            map.put("pros", review.getPros());
+            map.put("cons", review.getCons());
+            map.put("playHours", review.getPlayHours());
+            map.put("helpfulCount", review.getHelpfulCount());
+            map.put("createTime", review.getCreatedAt());
+            map.put("isVerifiedPurchase", review.getIsVerifiedPurchase());
+            // TODO: 调用 game-service API获取游戏详情
+            map.put("gameTitle", "游戏" + review.getGameId());
+            return map;
+        });
     }
 }

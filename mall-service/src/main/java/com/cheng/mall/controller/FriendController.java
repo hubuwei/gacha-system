@@ -222,4 +222,41 @@ public class FriendController {
         List<Map<String, Object>> blacklist = friendService.getBlacklist(uid);
         return CommonResponse.success(blacklist);
     }
+    
+    // ==================== 好友资料查看接口 ====================
+    
+    /**
+     * 获取好友的游戏库
+     */
+    @GetMapping("/{friendUid}/games")
+    public CommonResponse<Page<Map<String, Object>>> getFriendGames(
+            @PathVariable Long friendUid,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Page<Map<String, Object>> games = friendService.getFriendGames(friendUid, page, size);
+        return CommonResponse.success(games);
+    }
+    
+    /**
+     * 获取好友的最近游玩记录
+     */
+    @GetMapping("/{friendUid}/recent-games")
+    public CommonResponse<List<Map<String, Object>>> getFriendRecentGames(
+            @PathVariable Long friendUid,
+            @RequestParam(defaultValue = "10") int limit) {
+        List<Map<String, Object>> games = friendService.getFriendRecentGames(friendUid, limit);
+        return CommonResponse.success(games);
+    }
+    
+    /**
+     * 获取好友的游戏评测
+     */
+    @GetMapping("/{friendUid}/reviews")
+    public CommonResponse<Page<Map<String, Object>>> getFriendReviews(
+            @PathVariable Long friendUid,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<Map<String, Object>> reviews = friendService.getFriendReviews(friendUid, page, size);
+        return CommonResponse.success(reviews);
+    }
 }

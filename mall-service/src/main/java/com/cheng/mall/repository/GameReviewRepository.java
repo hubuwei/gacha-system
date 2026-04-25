@@ -41,4 +41,9 @@ public interface GameReviewRepository extends JpaRepository<GameReview, Long> {
      * 获取用户的评论
      */
     List<GameReview> findByUserIdAndGameId(Long userId, Long gameId);
+    
+    /**
+     * 分页查询用户的评测列表
+     */
+    Page<GameReview> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 }
