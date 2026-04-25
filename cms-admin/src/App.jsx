@@ -15,14 +15,14 @@ import './App.css';
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('admin_token');
   if (!token) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/cms/login" replace />;
   }
   return children;
 };
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/cms">
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
