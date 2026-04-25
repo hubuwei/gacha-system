@@ -1183,20 +1183,14 @@ function App({ onUserLogin, onUserLogout }) {
                 </div>
               )}
             </div>
-            {categories.map((category) => (
-              <button
-                key={category}
-                className={`category-btn ${activeCategory === category ? 'active' : ''}`}
-                onClick={() => setActiveCategory(category)}
-              >
-                {category}
-              </button>
-            ))}
           </div>
 
           <div className="navbar-user">
             {isLoggedIn ? (
               <>
+                <button className="nav-link-btn" onClick={() => navigate('/friends')}>
+                  👥 好友
+                </button>
                 <button className="nav-link-btn" onClick={() => navigate('/library')}>
                   🎮 游戏库
                 </button>

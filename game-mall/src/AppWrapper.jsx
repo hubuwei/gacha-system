@@ -10,6 +10,7 @@ import TransactionHistory from './components/TransactionHistory'
 import GameLibrary from './components/GameLibrary'
 import GameDetail from './components/GameDetail'
 import NotificationCenter from './components/NotificationCenter'
+import FriendSystem from './components/FriendSystem'
 import { AUTH_API_BASE, MALL_API_BASE } from './App'
 
 // 游戏详情包装组件
@@ -175,6 +176,9 @@ function AppWrapper() {
         
         {/* 通知中心 */}
         <Route path="/notifications" element={<NotificationCenter currentUser={currentUser} />} />
+        
+        {/* 好友系统 */}
+        <Route path="/friends" element={<FriendSystem />} />
       </Routes>
     </Router>
   )
