@@ -58,22 +58,22 @@ public class FriendController {
      * 发送好友申请
      */
     @PostMapping("/apply")
-    public CommonResponse<Void> sendFriendApply(
-            @RequestParam Long receiveUid,
-            @RequestParam(required = false) String message) {
-        // TODO: 从JWT Token中获取当前用户ID
+    public CommonResponse<Void> sendFriendApply(@RequestBody Map<String, Object> request) {
+        // TODO: 从 JWT Token中获取当前用户ID
         Long applyUid = 1L; // 临时硬编码，实际应从SecurityContext获取
+        Long receiveUid = ((Number) request.get("receiveUid")).longValue();
+        String message = (String) request.get("message");
         return friendService.sendFriendApply(applyUid, receiveUid, message);
     }
-
+    
     /**
      * 获取收到的好友申请列表
      */
-    @GetMapping("/apply/received")
+    @GetMapping("/applies/received")
     public CommonResponse<Page<Map<String, Object>>> getReceivedApplies(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
-        // TODO: 从JWT Token中获取当前用户ID
+        // TODO: 从 JWT Token中获取当前用户ID
         Long receiveUid = 1L;
         Page<Map<String, Object>> applies = friendService.getReceivedApplies(receiveUid, page, size);
         return CommonResponse.success(applies);
