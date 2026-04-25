@@ -286,4 +286,50 @@ public class FriendController {
         Long uid = 1L;
         return friendService.publishActivity(uid, content, gameId);
     }
+    
+    // ==================== 好友邀请接口 ====================
+    
+    /**
+     * Send game invitation to friend
+     */
+    @PostMapping("/invitation")
+    public CommonResponse<Void> sendInvitation(
+            @RequestParam Long inviteeUid,
+            @RequestParam Long gameId,
+            @RequestParam(required = false) String message) {
+        // TODO: Get current user ID from JWT Token
+        Long inviterUid = 1L;
+        return friendService.sendInvitation(inviterUid, inviteeUid, gameId, message);
+    }
+    
+    /**
+     * Accept invitation
+     */
+    @PostMapping("/invitation/{invitationId}/accept")
+    public CommonResponse<Map<String, Object>> acceptInvitation(@PathVariable Long invitationId) {
+        // TODO: Get current user ID from JWT Token
+        Long currentUid = 1L;
+        return friendService.acceptInvitation(invitationId, currentUid);
+    }
+    
+    /**
+     * Reject invitation
+     */
+    @PostMapping("/invitation/{invitationId}/reject")
+    public CommonResponse<Void> rejectInvitation(@PathVariable Long invitationId) {
+        // TODO: Get current user ID from JWT Token
+        Long currentUid = 1L;
+        return friendService.rejectInvitation(invitationId, currentUid);
+    }
+    
+    /**
+     * Get pending invitations
+     */
+    @GetMapping("/invitations/pending")
+    public CommonResponse<List<Map<String, Object>>> getPendingInvitations() {
+        // TODO: Get current user ID from JWT Token
+        Long currentUid = 1L;
+        List<Map<String, Object>> invitations = friendService.getPendingInvitations(currentUid);
+        return CommonResponse.success(invitations);
+    }
 }

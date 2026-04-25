@@ -32,6 +32,7 @@ public class FriendService {
     private final OrderRepository orderRepository;
     private final GameReviewRepository reviewRepository;
     private final FriendActivityRepository activityRepository;
+    private final FriendInvitationRepository invitationRepository;
 
     // 缓存已禁用，直接使用数据库查询
     private static final boolean CACHE_ENABLED = false;
@@ -590,5 +591,126 @@ public class FriendService {
     public CommonResponse<Void> publishActivity(Long uid, String content, Long gameId) {
         recordActivity(uid, "CUSTOM", content, gameId, null);
         return CommonResponse.success(null);
+    }
+    
+    // ==================== 好友邀请系统 ====================
+    
+    /**
+     * Send game invitation to friend
+     */
+    @Transactional
+    public CommonResponse<Void> sendInvitation(Long inviterUid, Long inviteeUid, Long gameId, String message) {
+        // Check if they are friends
+        Optional<UserFriend> friendship = friendRepository.findByUidAndFriendUid(inviterUid, inviteeUid);
+        if (friendship.isEmpty() || friendship.get().getStatus() != 1) {
+            return CommonResponse.error("只能邀请好友");
+        }
+        
+        // Check if already has pending invitation
+        Optional<FriendInvitation> existing = invitationRepository
+            .findByInviterUidAndInviteeUidAndGameIdAndStatus(inviterUid, inviteeUid, gameId, 0);
+        if (existing.isPresent()) {
+            return CommonResponse.error("已有待处理的邀请");
+        }
+        
+        // Create invitation
+        FriendInvitation invitation = new FriendInvitation();
+        invitation.setInviterUid(inviterUid);
+        invitation.setInviteeUid(inviteeUid);
+        invitation.setGameId(gameId);
+        invitation.setMessage(message);
+        invitation.setStatus(0); // pending
+        invitation.setExpiresAt(LocalDateTime.now().plusHours(24)); // expires in 24 hours
+        
+        invitationRepository.save(invitation);
+        
+        // Send WebSocket notification
+        notificationService.sendGameInvitationNotification(inviteeUid, inviterUid, gameId, message);
+        
+        log.info("用户 {} 向用户 {} 发送游戏邀请: 游戏ID={}", inviterUid, inviteeUid, gameId);
+        return CommonResponse.success(null);
+    }
+    
+    /**
+     * Accept invitation
+     */
+    @Transactional
+    public CommonResponse<Map<String, Object>> acceptInvitation(Long invitationId, Long currentUid) {
+        FriendInvitation invitation = invitationRepository.findById(invitationId)
+            .orElseThrow(() -> new RuntimeException("邀请不存在"));
+        
+        if (!invitation.getInviteeUid().equals(currentUid)) {
+            return CommonResponse.error("无权操作此邀请");
+        }
+        
+        if (invitation.getStatus() != 0) {
+            return CommonResponse.error("邀请已处理");
+        }
+        
+        // Update status
+        invitation.setStatus(1); // accepted
+        invitation.setRespondedAt(LocalDateTime.now());
+        invitationRepository.save(invitation);
+        
+        // Generate virtual room code for simulation
+        String roomCode = "ROOM-" + System.currentTimeMillis() % 100000;
+        invitation.setRoomCode(roomCode);
+        invitationRepository.save(invitation);
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("invitationId", invitation.getId());
+        result.put("gameId", invitation.getGameId());
+        result.put("roomCode", roomCode);
+        result.put("inviterUid", invitation.getInviterUid());
+        
+        log.info("用户 {} 接受了游戏邀请: 房间码={}", currentUid, roomCode);
+        return CommonResponse.success(result);
+    }
+    
+    /**
+     * Reject invitation
+     */
+    @Transactional
+    public CommonResponse<Void> rejectInvitation(Long invitationId, Long currentUid) {
+        FriendInvitation invitation = invitationRepository.findById(invitationId)
+            .orElseThrow(() -> new RuntimeException("邀请不存在"));
+        
+        if (!invitation.getInviteeUid().equals(currentUid)) {
+            return CommonResponse.error("无权操作此邀请");
+        }
+        
+        if (invitation.getStatus() != 0) {
+            return CommonResponse.error("邀请已处理");
+        }
+        
+        invitation.setStatus(2); // rejected
+        invitation.setRespondedAt(LocalDateTime.now());
+        invitationRepository.save(invitation);
+        
+        log.info("用户 {} 拒绝了游戏邀请", currentUid);
+        return CommonResponse.success(null);
+    }
+    
+    /**
+     * Get pending invitations
+     */
+    public List<Map<String, Object>> getPendingInvitations(Long inviteeUid) {
+        List<FriendInvitation> invitations = invitationRepository
+            .findByInviteeUidAndStatusOrderByCreatedAtDesc(inviteeUid, 0);
+        
+        return invitations.stream().map(invitation -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", invitation.getId());
+            map.put("inviterUid", invitation.getInviterUid());
+            map.put("gameId", invitation.getGameId());
+            map.put("message", invitation.getMessage());
+            map.put("createdAt", invitation.getCreatedAt());
+            map.put("expiresAt", invitation.getExpiresAt());
+            // TODO: Call auth-service API to get inviter info
+            map.put("inviterName", "用户" + invitation.getInviterUid());
+            // TODO: Call game-service API to get game title
+            map.put("gameTitle", "游戏" + invitation.getGameId());
+            return map;
+        }).collect(Collectors.toList());
     }
 }

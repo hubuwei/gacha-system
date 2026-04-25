@@ -192,4 +192,39 @@ public class NotificationService {
         });
         log.info("用户 {} 的所有通知已标记为已读，共 {} 条", uid, unreadNotifications.size());
     }
+    
+    /**
+     * Send game invitation notification
+     */
+    @Transactional
+    public void sendGameInvitationNotification(Long inviteeUid, Long inviterUid, Long gameId, String message) {
+        // 1. Save to database
+        UserNotification notification = new UserNotification();
+        notification.setUid(inviteeUid);
+        notification.setType("GAME_INVITATION");
+        notification.setTitle("游戏邀请");
+        notification.setContent(message != null ? message : "邀请你一起玩游戏");
+        notification.setFromUid(inviterUid);
+        notificationRepository.save(notification);
+        
+        // 2. WebSocket real-time push
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("type", "GAME_INVITATION");
+        payload.put("inviterUid", inviterUid);
+        payload.put("gameId", gameId);
+        payload.put("message", notification.getContent());
+        payload.put("notificationId", notification.getId());
+        payload.put("timestamp", System.currentTimeMillis());
+        
+        try {
+            messagingTemplate.convertAndSendToUser(
+                inviteeUid.toString(),
+                "/topic/notifications",
+                payload
+            );
+            log.info("游戏邀请通知已推送给用户 {}: 来自用户 {}", inviteeUid, inviterUid);
+        } catch (Exception e) {
+            log.error("WebSocket推送失败: {}", e.getMessage());
+        }
+    }
 }
