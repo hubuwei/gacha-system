@@ -50,4 +50,10 @@ public class UserFriend {
      */
     @Column(length = 100)
     private String remark;
+    
+    /**
+     * 好友分组名称
+     */
+    @Column(name = "group_name", length = 50)
+    private String groupName = "My Friends";
 }

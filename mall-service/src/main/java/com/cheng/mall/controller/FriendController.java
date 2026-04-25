@@ -141,7 +141,7 @@ public class FriendController {
      */
     @GetMapping("/stats")
     public CommonResponse<Map<String, Object>> getStats() {
-        // TODO: 从JWT Token中获取当前用户ID
+        // TODO: 从 JWT Token中获取当前用户ID
         Long uid = 1L;
         
         Map<String, Object> stats = new java.util.HashMap<>();
@@ -149,5 +149,77 @@ public class FriendController {
         stats.put("pendingApplyCount", friendService.getPendingApplyCount(uid));
         
         return CommonResponse.success(stats);
+    }
+    
+    // ==================== 好友分组接口 ====================
+    
+    /**
+     * 设置好友分组
+     */
+    @PutMapping("/{friendUid}/group")
+    public CommonResponse<Void> setFriendGroup(
+            @PathVariable Long friendUid,
+            @RequestParam String groupName) {
+        // TODO: 从 JWT Token中获取当前用户ID
+        Long uid = 1L;
+        return friendService.setFriendGroup(uid, friendUid, groupName);
+    }
+    
+    /**
+     * 获取所有分组名称
+     */
+    @GetMapping("/groups")
+    public CommonResponse<List<String>> getGroups() {
+        // TODO: 从 JWT Token中获取当前用户ID
+        Long uid = 1L;
+        List<String> groups = friendService.getGroups(uid);
+        return CommonResponse.success(groups);
+    }
+    
+    /**
+     * 按分组获取好友列表
+     */
+    @GetMapping("/group/{groupName}")
+    public CommonResponse<Page<Map<String, Object>>> getFriendsByGroup(
+            @PathVariable String groupName,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        // TODO: 从 JWT Token中获取当前用户ID
+        Long uid = 1L;
+        Page<Map<String, Object>> friends = friendService.getFriendsByGroup(uid, groupName, page, size);
+        return CommonResponse.success(friends);
+    }
+    
+    // ==================== 黑名单接口 ====================
+    
+    /**
+     * 拉黑用户
+     */
+    @PostMapping("/blacklist")
+    public CommonResponse<Void> blockUser(@RequestParam Long blockedUid) {
+        // TODO: 从 JWT Token中获取当前用户ID
+        Long uid = 1L;
+        return friendService.blockUser(uid, blockedUid);
+    }
+    
+    /**
+     * 取消拉黑
+     */
+    @DeleteMapping("/blacklist/{blockedUid}")
+    public CommonResponse<Void> unblockUser(@PathVariable Long blockedUid) {
+        // TODO: 从 JWT Token中获取当前用户ID
+        Long uid = 1L;
+        return friendService.unblockUser(uid, blockedUid);
+    }
+    
+    /**
+     * 获取黑名单列表
+     */
+    @GetMapping("/blacklist")
+    public CommonResponse<List<Map<String, Object>>> getBlacklist() {
+        // TODO: 从 JWT Token中获取当前用户ID
+        Long uid = 1L;
+        List<Map<String, Object>> blacklist = friendService.getBlacklist(uid);
+        return CommonResponse.success(blacklist);
     }
 }

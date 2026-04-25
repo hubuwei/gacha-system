@@ -2,9 +2,11 @@ package com.cheng.mall.service;
 
 import com.cheng.common.dto.CommonResponse;
 import com.cheng.mall.entity.FriendApply;
+import com.cheng.mall.entity.FriendBlacklist;
 import com.cheng.mall.entity.UserFriend;
 import com.cheng.mall.entity.UserOnlineStatus;
 import com.cheng.mall.repository.FriendApplyRepository;
+import com.cheng.mall.repository.FriendBlacklistRepository;
 import com.cheng.mall.repository.UserFriendRepository;
 import com.cheng.mall.repository.UserOnlineStatusRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class FriendService {
     private final FriendApplyRepository applyRepository;
     private final UserOnlineStatusRepository onlineStatusRepository;
     private final NotificationService notificationService;
+    private final FriendBlacklistRepository blacklistRepository;
 
     // 缓存已禁用，直接使用数据库查询
     private static final boolean CACHE_ENABLED = false;
@@ -291,7 +294,134 @@ public class FriendService {
             friend.setUid(uid);
             friend.setFriendUid(friendUid);
             friend.setStatus(1);
+            friend.setGroupName("My Friends");
             friendRepository.save(friend);
         }
+    }
+    
+    // ==================== 好友分组管理 ====================
+    
+    /**
+     * 设置好友分组
+     */
+    @Transactional
+    public CommonResponse<Void> setFriendGroup(Long uid, Long friendUid, String groupName) {
+        // 检查是否在黑名单中
+        if (isBlocked(uid, friendUid)) {
+            return CommonResponse.error("该用户在您的黑名单中");
+        }
+        
+        Optional<UserFriend> friend = friendRepository.findByUidAndFriendUid(uid, friendUid);
+        if (friend.isEmpty() || friend.get().getStatus() != 1) {
+            return CommonResponse.error("好友不存在");
+        }
+        
+        friend.get().setGroupName(groupName);
+        friendRepository.save(friend.get());
+        
+        log.info("用户 {} 将好友 {} 移动到分组: {}", uid, friendUid, groupName);
+        return CommonResponse.success(null);
+    }
+    
+    /**
+     * 获取所有分组名称
+     */
+    public List<String> getGroups(Long uid) {
+        List<UserFriend> friends = friendRepository.findByUidAndStatus(uid, 1);
+        return friends.stream()
+            .map(UserFriend::getGroupName)
+            .distinct()
+            .collect(Collectors.toList());
+    }
+    
+    /**
+     * 按分组获取好友列表
+     */
+    public Page<Map<String, Object>> getFriendsByGroup(Long uid, String groupName, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<UserFriend> friends = friendRepository.findByUidAndStatusAndGroupName(uid, 1, groupName, pageable);
+        
+        return friends.map(friend -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("friendUid", friend.getFriendUid());
+            map.put("remark", friend.getRemark());
+            map.put("groupName", friend.getGroupName());
+            map.put("createTime", friend.getCreateTime());
+            // TODO: 调用auth-service API获取用户信息
+            map.put("username", "用户" + friend.getFriendUid());
+            map.put("avatar", null);
+            return map;
+        });
+    }
+    
+    // ==================== 黑名单管理 ====================
+    
+    /**
+     * 拉黑用户
+     */
+    @Transactional
+    public CommonResponse<Void> blockUser(Long uid, Long blockedUid) {
+        if (uid.equals(blockedUid)) {
+            return CommonResponse.error("不能拉黑自己");
+        }
+        
+        // 检查是否已拉黑
+        Optional<FriendBlacklist> existing = blacklistRepository.findByUidAndBlockedUid(uid, blockedUid);
+        if (existing.isPresent()) {
+            return CommonResponse.error("该用户已在黑名单中");
+        }
+        
+        // 添加到黑名单
+        FriendBlacklist blacklist = new FriendBlacklist();
+        blacklist.setUid(uid);
+        blacklist.setBlockedUid(blockedUid);
+        blacklistRepository.save(blacklist);
+        
+        // 删除好友关系（如果存在）
+        friendRepository.findByUidAndFriendUid(uid, blockedUid)
+            .ifPresent(friendRepository::delete);
+        friendRepository.findByUidAndFriendUid(blockedUid, uid)
+            .ifPresent(friendRepository::delete);
+        
+        log.info("用户 {} 拉黑了用户 {}", uid, blockedUid);
+        return CommonResponse.success(null);
+    }
+    
+    /**
+     * 取消拉黑
+     */
+    @Transactional
+    public CommonResponse<Void> unblockUser(Long uid, Long blockedUid) {
+        Optional<FriendBlacklist> blacklist = blacklistRepository.findByUidAndBlockedUid(uid, blockedUid);
+        if (blacklist.isEmpty()) {
+            return CommonResponse.error("该用户不在黑名单中");
+        }
+        
+        blacklistRepository.delete(blacklist.get());
+        log.info("用户 {} 取消拉黑用户 {}", uid, blockedUid);
+        return CommonResponse.success(null);
+    }
+    
+    /**
+     * 获取黑名单列表
+     */
+    public List<Map<String, Object>> getBlacklist(Long uid) {
+        List<FriendBlacklist> blacklists = blacklistRepository.findByUidOrderByCreateTimeDesc(uid);
+        
+        return blacklists.stream().map(blacklist -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("blockedUid", blacklist.getBlockedUid());
+            map.put("createTime", blacklist.getCreateTime());
+            // TODO: 调用auth-service API获取用户信息
+            map.put("username", "用户" + blacklist.getBlockedUid());
+            return map;
+        }).collect(Collectors.toList());
+    }
+    
+    /**
+     * 检查是否已拉黑某用户
+     */
+    private boolean isBlocked(Long uid, Long targetUid) {
+        return blacklistRepository.findByUidAndBlockedUid(uid, targetUid).isPresent();
     }
 }

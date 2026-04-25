@@ -35,4 +35,9 @@ public interface UserFriendRepository extends JpaRepository<UserFriend, Long> {
      * 批量查询好友信息（用于Redis缓存）
      */
     List<UserFriend> findByUidAndStatus(Long uid, Integer status);
+    
+    /**
+     * 按分组查询好友列表
+     */
+    Page<UserFriend> findByUidAndStatusAndGroupName(Long uid, Integer status, String groupName, Pageable pageable);
 }
