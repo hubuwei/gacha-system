@@ -273,6 +273,72 @@ public class AuthController {
     }
 
     /**
+     * 搜索用户（用于好友系统）
+     */
+    @GetMapping("/search")
+    public CommonResponse<Map<String, Object>> searchUsers(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        try {
+            // 按ID精确搜索
+            if (userId != null) {
+                User user = userRepository.findById(userId).orElse(null);
+                if (user == null) {
+                    return CommonResponse.error("用户不存在");
+                }
+                
+                Map<String, Object> userInfo = new HashMap<>();
+                userInfo.put("id", user.getId());
+                userInfo.put("username", user.getUsername());
+                userInfo.put("nickname", user.getNickname());
+                userInfo.put("avatarUrl", user.getAvatarUrl());
+                userInfo.put("signature", user.getSignature());
+                userInfo.put("userLevel", user.getUserLevel());
+                
+                Map<String, Object> result = new HashMap<>();
+                result.put("list", java.util.Collections.singletonList(userInfo));
+                result.put("total", 1);
+                return CommonResponse.success(result);
+            }
+            
+            // 按关键词模糊搜索（用户名或昵称）
+            if (keyword == null || keyword.trim().isEmpty()) {
+                return CommonResponse.error("请提供搜索关键词或用户ID");
+            }
+            
+            String searchPattern = "%" + keyword + "%";
+            org.springframework.data.domain.Page<User> users = userRepository.findByUsernameContainingOrNicknameContaining(
+                searchPattern, searchPattern,
+                org.springframework.data.domain.PageRequest.of(page - 1, size)
+            );
+            
+            java.util.List<Map<String, Object>> userList = new java.util.ArrayList<>();
+            for (User user : users.getContent()) {
+                Map<String, Object> userInfo = new HashMap<>();
+                userInfo.put("id", user.getId());
+                userInfo.put("username", user.getUsername());
+                userInfo.put("nickname", user.getNickname());
+                userInfo.put("avatarUrl", user.getAvatarUrl());
+                userInfo.put("signature", user.getSignature());
+                userInfo.put("userLevel", user.getUserLevel());
+                userList.add(userInfo);
+            }
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("list", userList);
+            result.put("total", users.getTotalElements());
+            result.put("page", page);
+            result.put("size", size);
+            
+            return CommonResponse.success(result);
+        } catch (Exception e) {
+            return CommonResponse.error("搜索失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 上传头像
      */
     @PostMapping("/avatar")
