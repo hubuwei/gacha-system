@@ -308,9 +308,9 @@ public class AuthController {
                 return CommonResponse.error("请提供搜索关键词或用户ID");
             }
             
-            String searchPattern = "%" + keyword + "%";
+            // Containing 会自动添加 %，不需要手动添加
             org.springframework.data.domain.Page<User> users = userRepository.findByUsernameContainingOrNicknameContaining(
-                searchPattern, searchPattern,
+                keyword, keyword,
                 org.springframework.data.domain.PageRequest.of(page - 1, size)
             );
             
