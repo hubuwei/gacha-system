@@ -20,7 +20,9 @@ public class OrderService {
      * 获取订单列表（支持筛选和分页）
      */
     public Map<String, Object> getOrders(String orderNo, String paymentStatus, String orderStatus, int page, int size) {
-        StringBuilder countSql = new StringBuilder("SELECT COUNT(*) FROM orders WHERE 1=1");
+        StringBuilder countSql = new StringBuilder(
+            "SELECT COUNT(*) FROM orders o WHERE 1=1"
+        );
         StringBuilder querySql = new StringBuilder(
             "SELECT o.id, o.order_no, o.user_id, o.total_amount, o.discount_amount, " +
             "o.actual_amount, o.payment_method, o.payment_status, o.payment_time, " +
