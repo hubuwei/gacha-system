@@ -1,0 +1,44 @@
+server:
+  port: ${CMS_PORT:8085}
+
+spring:
+  application:
+    name: cms-service
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:gacha_system_dev}?useSSL=${DB_USE_SSL:false}&serverTimezone=${DB_TIMEZONE:Asia/Shanghai}&characterEncoding=${DB_ENCODING:utf-8}&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:true}
+    properties:
+      hibernate:
+        dialect: ${JPA_DIALECT:org.hibernate.dialect.MySQLDialect}
+        default_storage_engine: innodb
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+      enabled: true
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:your-secret-key-change-in-production-for-security}
+  expiration: 86400000  # 24 hours in milliseconds
+
+# File Upload Configuration
+file:
+  upload:
+    path: ${UPLOAD_PATH:./uploads/cms}
+    allowed-types: jpg,jpeg,png,gif,webp
+    max-size: 10485760  # 10MB
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.cheng.cms: DEBUG
+  file:
+    name: ./logs/cms-service.log

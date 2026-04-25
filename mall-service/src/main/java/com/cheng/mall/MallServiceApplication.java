@@ -36,7 +36,7 @@ public class MallServiceApplication {
         SpringApplication.run(MallServiceApplication.class, args);
         System.out.println("====================================");
         System.out.println("    游戏商城服务启动成功！");
-        System.out.println("    访问地址：http://localhost:20222/api");
+        System.out.println("    访问地址：http://localhost:8081/api");
         System.out.println("====================================");
     }
 }

@@ -12,6 +12,7 @@
         <module>game-service</module>
         <module>gacha-service</module>
         <module>mall-service</module>
+        <module>cms-service</module>
     </modules>
 
     <properties>

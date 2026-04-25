@@ -102,6 +102,10 @@ function App({ onUserLogin, onUserLogout }) {
   
   // 用于强制刷新数据的计数器
   const [refreshKey, setRefreshKey] = useState(0)
+  
+  // GTA6倒计时弹窗状态
+  const [showGTA6Modal, setShowGTA6Modal] = useState(false)
+  const [gta6Countdown, setGta6Countdown] = useState({ months: 0, days: 0, hours: 0, minutes: 0 })
 
   const categories = ['全部', '动作', '冒险', '赛车', '射击', 'RPG', '模拟', '策略']
 
@@ -112,6 +116,12 @@ function App({ onUserLogin, onUserLogout }) {
   // 页面加载或路由变化时检查登录状态并获取数据
   useEffect(() => {
     console.log('[App] useEffect 触发, pathname:', location.pathname)
+    
+    // 首次加载显示GTA6倒计时弹窗
+    if (!sessionStorage.getItem('gta6ModalShown')) {
+      setShowGTA6Modal(true)
+      sessionStorage.setItem('gta6ModalShown', 'true')
+    }
     
     let refreshInterval = null
     
@@ -187,6 +197,14 @@ function App({ onUserLogin, onUserLogout }) {
     window.addEventListener('cart-notification', handleNotification)
     window.addEventListener('wishlist-notification', handleNotification)
     
+    // GTA6倒计时定时器（每秒更新）
+    const gta6CountdownInterval = setInterval(() => {
+      updateGTA6Countdown()
+    }, 1000)
+    
+    // 初始化倒计时
+    updateGTA6Countdown()
+    
     // 清理函数：统一在最后返回
     return () => {
       console.log('[App] useEffect 清理')
@@ -197,10 +215,33 @@ function App({ onUserLogin, onUserLogout }) {
       if (window.notificationRefreshInterval) {
         clearInterval(window.notificationRefreshInterval)
       }
+      // 清理GTA6倒计时定时器
+      clearInterval(gta6CountdownInterval)
       window.removeEventListener('cart-notification', handleNotification)
       window.removeEventListener('wishlist-notification', handleNotification)
     }
   }, [location.pathname])
+  
+  // GTA6发售日期（假设为2026年10月26日）
+  const GTA6_RELEASE_DATE = new Date('2026-10-26T00:00:00')
+  
+  // 更新GTA6倒计时
+  const updateGTA6Countdown = () => {
+    const now = new Date()
+    const diff = GTA6_RELEASE_DATE - now
+    
+    if (diff <= 0) {
+      setGta6Countdown({ months: 0, days: 0, hours: 0, minutes: 0 })
+      return
+    }
+    
+    const months = Math.floor(diff / (1000 * 60 * 60 * 24 * 30))
+    const days = Math.floor((diff % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24))
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+    
+    setGta6Countdown({ months, days, hours, minutes })
+  }
 
   // Banner 自动轮播
   useEffect(() => {
@@ -1653,6 +1694,50 @@ function App({ onUserLogin, onUserLogout }) {
         </button>
       )}
         </>
+      )}
+
+      {/* GTA6倒计时弹窗 */}
+      {showGTA6Modal && (
+        <div className="gta6-modal-overlay" onClick={() => setShowGTA6Modal(false)}>
+          <div className="gta6-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="gta6-modal-close" 
+              onClick={() => setShowGTA6Modal(false)}
+            >
+              ×
+            </button>
+            <div className="gta6-modal-body">
+              <h2 className="gta6-modal-title">距离GTA6发售还有</h2>
+              <div className="gta6-countdown">
+                <div className="countdown-item">
+                  <span className="countdown-number">{gta6Countdown.months}</span>
+                  <span className="countdown-label">月</span>
+                </div>
+                <div className="countdown-separator">:</div>
+                <div className="countdown-item">
+                  <span className="countdown-number">{gta6Countdown.days}</span>
+                  <span className="countdown-label">天</span>
+                </div>
+                <div className="countdown-separator">:</div>
+                <div className="countdown-item">
+                  <span className="countdown-number">{gta6Countdown.hours}</span>
+                  <span className="countdown-label">时</span>
+                </div>
+                <div className="countdown-separator">:</div>
+                <div className="countdown-item">
+                  <span className="countdown-number">{gta6Countdown.minutes}</span>
+                  <span className="countdown-label">分</span>
+                </div>
+              </div>
+              <button 
+                className="gta6-modal-confirm" 
+                onClick={() => setShowGTA6Modal(false)}
+              >
+                我知道了
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* 登录/注册模态框 */}
