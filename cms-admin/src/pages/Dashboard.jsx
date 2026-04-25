@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Table } from 'antd';
+import { Card, Row, Col, Statistic, Table, Spin } from 'antd';
 import {
   UserOutlined,
   ShoppingCartOutlined,
@@ -7,37 +7,45 @@ import {
   AppstoreOutlined,
 } from '@ant-design/icons';
 import { Column } from '@ant-design/charts';
+import request from '../utils/request';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalOrders: 0,
     totalRevenue: 0,
     totalGames: 0,
   });
+  const [revenueData, setRevenueData] = useState([]);
 
-  // Mock data - replace with actual API calls
+  // 获取统计数据
   useEffect(() => {
-    // TODO: Call getDashboardStats() API
-    setStats({
-      totalUsers: 1234,
-      totalOrders: 567,
-      totalRevenue: 89012.50,
-      totalGames: 89,
-    });
+    fetchDashboardData();
   }, []);
 
-  const revenueData = [
-    { date: '周一', revenue: 12000 },
-    { date: '周二', revenue: 15000 },
-    { date: '周三', revenue: 18000 },
-    { date: '周四', revenue: 14000 },
-    { date: '周五', revenue: 22000 },
-    { date: '周六', revenue: 28000 },
-    { date: '周日', revenue: 25000 },
-  ];
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // 获取统计数据
+      const statsResponse = await request.get('/dashboard/stats');
+      if (statsResponse.code === 200) {
+        setStats(statsResponse.data);
+      }
+
+      // 获取本周营收数据
+      const revenueResponse = await request.get('/dashboard/weekly-revenue');
+      if (revenueResponse.code === 200) {
+        setRevenueData(revenueResponse.data);
+      }
+    } catch (error) {
+      console.error('获取数据失败:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const config = {
     data: revenueData,
@@ -67,7 +75,8 @@ const Dashboard = () => {
     <div className="dashboard">
       <h2>数据看板</h2>
       
-      <Row gutter={[16, 16]} className="stats-row">
+      <Spin spinning={loading}>
+        <Row gutter={[16, 16]} className="stats-row">
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
@@ -112,9 +121,12 @@ const Dashboard = () => {
         </Col>
       </Row>
 
-      <Card title="本周营收趋势" className="chart-card">
-        <Column {...config} />
-      </Card>
+      {revenueData.length > 0 && (
+        <Card title="本周营收趋势" className="chart-card">
+          <Column {...config} />
+        </Card>
+      )}
+      </Spin>
     </div>
   );
 };
