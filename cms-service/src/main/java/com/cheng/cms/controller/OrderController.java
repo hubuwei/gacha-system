@@ -22,7 +22,7 @@ public class OrderController {
      * 获取订单列表
      */
     @GetMapping
-    public CommonResponse<List<Map<String, Object>>> getOrders(
+    public CommonResponse<Map<String, Object>> getOrders(
             @RequestParam(required = false) String orderNo,
             @RequestParam(required = false) String paymentStatus,
             @RequestParam(required = false) String orderStatus,
@@ -30,7 +30,7 @@ public class OrderController {
             @RequestParam(defaultValue = "20") int size) {
         try {
             Map<String, Object> result = orderService.getOrders(orderNo, paymentStatus, orderStatus, page, size);
-            return CommonResponse.success((List<Map<String, Object>>) result.get("list"));
+            return CommonResponse.success(result);
         } catch (Exception e) {
             return CommonResponse.error("获取订单列表失败: " + e.getMessage());
         }
