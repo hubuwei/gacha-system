@@ -5,6 +5,7 @@ import com.cheng.cms.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
@@ -43,6 +44,20 @@ public class DashboardController {
             return CommonResponse.success(revenueData);
         } catch (Exception e) {
             return CommonResponse.error("获取营收数据失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取热门游戏排行
+     */
+    @GetMapping("/popular-games")
+    public CommonResponse<Object> getPopularGames(
+            @RequestParam(defaultValue = "10") int limit) {
+        try {
+            Object popularGames = dashboardService.getPopularGames(limit);
+            return CommonResponse.success(popularGames);
+        } catch (Exception e) {
+            return CommonResponse.error("获取热门游戏失败: " + e.getMessage());
         }
     }
 }

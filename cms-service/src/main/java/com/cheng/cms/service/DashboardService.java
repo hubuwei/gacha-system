@@ -27,10 +27,20 @@ public class DashboardService {
             "SELECT COUNT(*) FROM users", Long.class);
         stats.put("totalUsers", totalUsers != null ? totalUsers : 0);
 
+        // 今日新增用户
+        Long todayNewUsers = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM users WHERE DATE(created_at) = CURDATE()", Long.class);
+        stats.put("todayNewUsers", todayNewUsers != null ? todayNewUsers : 0);
+
         // 总订单数
         Long totalOrders = jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM orders", Long.class);
         stats.put("totalOrders", totalOrders != null ? totalOrders : 0);
+
+        // 今日订单成交量
+        Long todayOrders = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM orders WHERE DATE(created_at) = CURDATE()", Long.class);
+        stats.put("todayOrders", todayOrders != null ? todayOrders : 0);
 
         // 总营收（已完成的订单）
         BigDecimal totalRevenue = jdbcTemplate.queryForObject(
@@ -38,10 +48,31 @@ public class DashboardService {
             BigDecimal.class);
         stats.put("totalRevenue", totalRevenue != null ? totalRevenue : BigDecimal.ZERO);
 
+        // 今日销售额
+        BigDecimal todayRevenue = jdbcTemplate.queryForObject(
+            "SELECT COALESCE(SUM(actual_amount), 0) FROM orders WHERE order_status = 'completed' AND DATE(created_at) = CURDATE()", 
+            BigDecimal.class);
+        stats.put("todayRevenue", todayRevenue != null ? todayRevenue : BigDecimal.ZERO);
+
         // 游戏总数
         Long totalGames = jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM games", Long.class);
         stats.put("totalGames", totalGames != null ? totalGames : 0);
+
+        // 待处理订单数
+        Long pendingOrders = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM orders WHERE order_status = 'pending'", Long.class);
+        stats.put("pendingOrders", pendingOrders != null ? pendingOrders : 0);
+
+        // 待审核评论数（假设有comments表）
+        Long pendingReviews = 0L;
+        try {
+            pendingReviews = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM game_reviews WHERE status = 'pending'", Long.class);
+        } catch (Exception e) {
+            // 如果表不存在，默认为0
+        }
+        stats.put("pendingReviews", pendingReviews != null ? pendingReviews : 0);
 
         return stats;
     }

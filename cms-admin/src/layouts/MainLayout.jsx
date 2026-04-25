@@ -8,6 +8,8 @@ import {
   NotificationOutlined,
   SettingOutlined,
   LogoutOutlined,
+  MessageOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import './MainLayout.css';
@@ -25,42 +27,42 @@ const MainLayout = () => {
     {
       key: '/',
       icon: <DashboardOutlined />,
-      label: '数据看板',
+      label: '首页数据看板',
     },
     {
-      key: '/games',
+      key: 'games',
       icon: <AppstoreOutlined />,
-      label: '游戏管理',
-    },
-    {
-      key: '/orders',
-      icon: <ShoppingCartOutlined />,
-      label: '订单管理',
+      label: '游戏商品管理',
+      children: [
+        {
+          key: '/games',
+          label: '游戏列表',
+        },
+        {
+          key: '/games/banners',
+          label: '首页Banner配置',
+        },
+      ],
     },
     {
       key: '/users',
       icon: <UserOutlined />,
-      label: '用户管理',
+      label: '用户账号管理',
+    },
+    {
+      key: '/orders',
+      icon: <ShoppingCartOutlined />,
+      label: '订单财务管理',
+    },
+    {
+      key: '/reviews',
+      icon: <MessageOutlined />,
+      label: '评论内容审核',
     },
     {
       key: '/announcements',
-      icon: <NotificationOutlined />,
-      label: '活动公告',
-    },
-    {
-      key: 'notifications',
-      icon: <NotificationOutlined />,
-      label: '消息通知',
-      children: [
-        {
-          key: '/notifications/broadcast',
-          label: '广播通知',
-        },
-        {
-          key: '/notifications/discount',
-          label: '折扣通知',
-        },
-      ],
+      icon: <FileTextOutlined />,
+      label: '公告资讯发布',
     },
     {
       key: '/settings',
