@@ -18,11 +18,11 @@ public class FriendApply {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(name = "from_uid", nullable = false)
-    private Long fromUid; // 申请人
+    @Column(name = "apply_uid", nullable = false)
+    private Long applyUid; // 申请人
     
-    @Column(name = "to_uid", nullable = false)
-    private Long toUid; // 被申请人
+    @Column(name = "receive_uid", nullable = false)
+    private Long receiveUid; // 被申请人
     
     @Column(length = 200)
     private String message; // 申请消息

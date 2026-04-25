@@ -19,9 +19,10 @@ export default defineConfig({
         secure: false
         // 不需要 rewrite，因为后端已经配置了 /api/GamePapers/**
       },
-      // 将认证相关的请求代理到 auth-service (8084端口)
+      // 将认证相关的请求代理到 auth-service
+      // 本地开发时使用本地服务(8084)，如需测试服务器数据可改为 http://111.228.12.167:8084
       '/api/auth': {
-        target: 'http://localhost:8084',
+        target: 'http://localhost:8084',  // 或 'http://111.228.12.167:8084'
         changeOrigin: true,
         secure: false
       },
@@ -30,13 +31,15 @@ export default defineConfig({
         target: 'http://localhost:8081',
         changeOrigin: true,
         ws: true,  // 启用WebSocket代理
-        secure: false
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '/api')  // 保持/api前缀
       },
       // 将所有其他 /api 开头的请求代理到 mall-service
       '/api': {
         target: 'http://localhost:8081',
         changeOrigin: true,
         secure: false
+        // 不需要rewrite，因为后端context-path已经是/api
       }
     }
   }

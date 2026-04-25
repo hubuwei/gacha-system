@@ -17,7 +17,7 @@ const Login = () => {
         localStorage.setItem('admin_token', response.data.token);
         localStorage.setItem('admin_info', JSON.stringify(response.data));
         message.success('登录成功');
-        navigate('/');
+        navigate('/');  // React Router会处理为 /cms/
       }
     } catch (error) {
       message.error(error.message || '登录失败');

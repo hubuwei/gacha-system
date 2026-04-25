@@ -13,7 +13,7 @@ import java.util.Map;
  * 好友系统Controller
  */
 @RestController
-@RequestMapping("/api/friend")
+@RequestMapping("/friend")
 @RequiredArgsConstructor
 public class FriendController {
 
