@@ -135,4 +135,37 @@ public class DashboardService {
             default: return "";
         }
     }
+
+    /**
+     * 获取热门游戏排行（按销量）
+     */
+    public List<Map<String, Object>> getPopularGames(int limit) {
+        String sql = "SELECT " +
+            "g.id, " +
+            "g.title, " +
+            "g.cover_image, " +
+            "g.current_price as price, " +
+            "COUNT(oi.id) as sales_count, " +
+            "COALESCE(SUM(oi.actual_price), 0) as total_revenue " +
+            "FROM games g " +
+            "LEFT JOIN order_items oi ON g.id = oi.game_id " +
+            "LEFT JOIN orders o ON oi.order_id = o.id AND o.order_status = 'completed' " +
+            "GROUP BY g.id, g.title, g.cover_image, g.current_price " +
+            "ORDER BY sales_count DESC " +
+            "LIMIT ?";
+
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, limit);
+        
+        // 转换数据类型
+        for (Map<String, Object> row : rows) {
+            if (row.get("sales_count") instanceof Number) {
+                row.put("sales_count", ((Number) row.get("sales_count")).intValue());
+            }
+            if (row.get("total_revenue") instanceof Number) {
+                row.put("total_revenue", ((Number) row.get("total_revenue")).doubleValue());
+            }
+        }
+        
+        return rows;
+    }
 }

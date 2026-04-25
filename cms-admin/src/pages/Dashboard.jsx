@@ -68,7 +68,7 @@ const Dashboard = () => {
     xField: 'date',
     yField: 'revenue',
     label: {
-      position: 'middle',
+      position: 'top',  // 修改为top
       style: {
         fill: '#FFFFFF',
         opacity: 0.6,
@@ -100,7 +100,7 @@ const Dashboard = () => {
                 title="今日新增用户"
                 value={stats.todayNewUsers}
                 prefix={<UserOutlined />}
-                valueStyle={{ color: '#52c41a' }}
+                valueStyle={{ color: '#52c41a' }}  // 暂时保留，等待Ant Design更新
               />
             </Card>
           </Col>
