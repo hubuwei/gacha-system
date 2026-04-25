@@ -25,13 +25,14 @@ const Orders = () => {
     try {
       const params = { page, size, ...filters };
       
-      const response = await request.get('/orders', { params });
+      const response = await request.get('/cms/orders', { params });
       if (response.code === 200) {
-        setData(response.data || []);
+        // API返回格式: { list: [...], total: 100, page: 1, size: 20 }
+        setData(response.data?.list || []);
         setPagination({
           current: page,
           pageSize: size,
-          total: response.data?.length || 0
+          total: response.data?.total || 0
         });
       }
     } catch (error) {
@@ -71,7 +72,7 @@ const Orders = () => {
   // 查看订单详情
   const handleViewDetail = async (record) => {
     try {
-      const response = await request.get(`/orders/${record.id}`);
+      const response = await request.get(`/cms/orders/${record.id}`);
       if (response.code === 200) {
         setCurrentOrder(response.data);
         setDetailVisible(true);
