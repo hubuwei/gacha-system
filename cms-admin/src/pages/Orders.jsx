@@ -25,7 +25,8 @@ const Orders = () => {
     try {
       const params = { page, size, ...filters };
       
-      const response = await request.get('/cms/orders', { params });
+      // request baseURL已包含 /api/cms，所以只需 /orders
+      const response = await request.get('/orders', { params });
       if (response.code === 200) {
         // API返回格式: { list: [...], total: 100, page: 1, size: 20 }
         setData(response.data?.list || []);

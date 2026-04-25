@@ -23,7 +23,8 @@ const Reviews = () => {
         params.status = status;
       }
       
-      const response = await request.get('/cms/reviews', { params });
+      // request baseURL已包含 /api/cms，所以只需 /reviews
+      const response = await request.get('/reviews', { params });
       if (response.code === 200) {
         setReviews(response.data.list || []);
         setTotal(response.data.total || 0);
@@ -42,7 +43,7 @@ const Reviews = () => {
   // 审核通过
   const handleApprove = async (id) => {
     try {
-      const response = await request.put(`/cms/reviews/${id}/approve`);
+      const response = await request.put(`/reviews/${id}/approve`);
       if (response.code === 200) {
         message.success('审核通过');
         fetchReviews();
@@ -60,7 +61,7 @@ const Reviews = () => {
       input: <TextArea placeholder="请输入拒绝原因" />,
       onOk: async (value) => {
         try {
-          const response = await request.put(`/cms/reviews/${id}/reject`, {
+          const response = await request.put(`/reviews/${id}/reject`, {
             reason: value,
           });
           if (response.code === 200) {
