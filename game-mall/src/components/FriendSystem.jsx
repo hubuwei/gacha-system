@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import SockJS from 'sockjs-client'
+import Stomp from '@stomp/stompjs'
 import './NewPages.css'
 
 const API_BASE = '/api'
