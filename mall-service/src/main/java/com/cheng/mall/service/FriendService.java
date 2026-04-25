@@ -31,6 +31,7 @@ public class FriendService {
     private final UserFriendRepository friendRepository;
     private final FriendApplyRepository applyRepository;
     private final UserOnlineStatusRepository onlineStatusRepository;
+    private final NotificationService notificationService;
 
     // 缓存已禁用，直接使用数据库查询
     private static final boolean CACHE_ENABLED = false;
@@ -123,7 +124,8 @@ public class FriendService {
         
         applyRepository.save(apply);
         
-        // TODO: 通过RabbitMQ发送通知给接收人
+        // 通过WebSocket发送通知给接收人
+        notificationService.sendFriendRequestNotification(receiveUid, applyUid, message);
         
         log.info("用户 {} 向用户 {} 发送好友申请", applyUid, receiveUid);
         return CommonResponse.success(null);
@@ -170,6 +172,9 @@ public class FriendService {
         // 创建双向好友关系
         createFriendRelation(apply.getApplyUid(), apply.getReceiveUid());
         createFriendRelation(apply.getReceiveUid(), apply.getApplyUid());
+        
+        // 发送通知给申请人
+        notificationService.sendFriendAcceptedNotification(apply.getApplyUid(), currentUid);
         
         log.info("用户 {} 同意了用户 {} 的好友申请", currentUid, apply.getApplyUid());
         return CommonResponse.success(null);
