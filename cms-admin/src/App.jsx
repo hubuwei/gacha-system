@@ -15,7 +15,7 @@ import './App.css';
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('admin_token');
   if (!token) {
-    return <Navigate to="/cms/login" replace />;
+    return <Navigate to="/login" replace />;  // React Router会自动添加basename
   }
   return children;
 };
