@@ -91,4 +91,14 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,httptrace,loggers,beans
+        include: health,info,metrics,httptrace,loggers,beans,env,prometheus,threaddump,heapdump
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}

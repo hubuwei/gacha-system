@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <!-- 日志输出格式 -->
+    <!-- 日志输出格式：时间戳、线程、日志级别、类名、消息 -->
     <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"/>
-    <property name="LOG_FILE" value="logs/mall-service"/>
+    <property name="LOG_FILE" value="logs/cms-service"/>
     <property name="LOG_MAX_HISTORY" value="30"/>
     <property name="LOG_MAX_SIZE" value="50MB"/>
 
@@ -10,6 +10,7 @@
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
         </encoder>
     </appender>
 
@@ -95,14 +96,20 @@
         <appender-ref ref="ERROR_FILE"/>
         <appender-ref ref="WARN_FILE"/>
         <appender-ref ref="INFO_FILE"/>
-        <appender-ref ref="DEBUG_FILE"/>
     </root>
 
     <!-- 包级别日志配置 -->
-    <logger name="com.cheng.mall" level="INFO"/>
-    <logger name="com.cheng.common" level="INFO"/>
+    <logger name="com.cheng.cms" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="DEBUG_FILE"/>
+        <appender-ref ref="INFO_FILE"/>
+        <appender-ref ref="WARN_FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </logger>
+    
     <logger name="org.springframework.web" level="INFO"/>
     <logger name="org.hibernate.SQL" level="WARN"/>
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="WARN"/>
     <logger name="org.springframework.security" level="WARN"/>
 
     <!-- 开发环境特定配置 -->
@@ -110,7 +117,7 @@
         <root level="DEBUG">
             <appender-ref ref="CONSOLE"/>
         </root>
-        <logger name="com.cheng.mall" level="DEBUG"/>
+        <logger name="com.cheng.cms" level="DEBUG"/>
     </springProfile>
 
     <!-- 生产环境特定配置 -->
@@ -120,6 +127,6 @@
             <appender-ref ref="WARN_FILE"/>
             <appender-ref ref="INFO_FILE"/>
         </root>
-        <logger name="com.cheng.mall" level="INFO"/>
+        <logger name="com.cheng.cms" level="INFO"/>
     </springProfile>
 </configuration>

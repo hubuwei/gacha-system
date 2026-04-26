@@ -37,8 +37,24 @@ file:
 
 # Logging
 logging:
+  config: classpath:logback-spring.xml
   level:
     root: INFO
     com.cheng.cms: DEBUG
   file:
     name: ./logs/cms-service.log
+
+# Spring Boot Actuator 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,httptrace,loggers,beans,env,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
