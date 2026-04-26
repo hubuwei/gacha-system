@@ -15,11 +15,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 抢购控制器
+ * 抢购控制器 - 已弱化（功能保留但不启用）
  */
-@RestController
-@RequestMapping("/api/seckill")
-@CrossOrigin(origins = "*")
+//@RestController
+//@RequestMapping("/api/seckill")
+//@CrossOrigin(origins = "*")
 public class SeckillController {
     
     @Autowired

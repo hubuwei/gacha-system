@@ -10,7 +10,7 @@
         <module>auth-service</module>
         <module>common</module>
         <module>game-service</module>
-        <module>gacha-service</module>
+        <!-- <module>gacha-service</module> --> <!-- 抽奖系统已移除 -->
         <module>mall-service</module>
         <module>cms-service</module>
     </modules>
