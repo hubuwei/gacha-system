@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Form, Input, Button, Card, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../api/auth';
+import axios from 'axios';
 import './Login.css';
 
 const Login = () => {
@@ -12,15 +12,24 @@ const Login = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      const response = await login(values);
-      if (response.code === 200) {
-        localStorage.setItem('admin_token', response.data.token);
-        localStorage.setItem('admin_info', JSON.stringify(response.data));
+      const response = await axios.post('/api/cms/auth/login', values, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      });
+      const res = response.data;
+      if (res.code === 200) {
+        localStorage.setItem('admin_token', res.data.token);
+        localStorage.setItem('admin_info', JSON.stringify(res.data));
         message.success('登录成功');
         navigate('/');  // React Router会处理为 /cms/
+      } else {
+        message.error(res.message || '登录失败');
       }
     } catch (error) {
-      message.error(error.message || '登录失败');
+      message.error(error.message || 'Network Error');
+      console.error('Login error:', error);
     } finally {
       setLoading(false);
     }

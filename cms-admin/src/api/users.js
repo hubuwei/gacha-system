@@ -8,25 +8,10 @@ export const getUsers = (params) => {
   });
 };
 
-export const getUserById = (id) => {
-  return request({
-    url: `/users/${id}`,
-    method: 'get',
-  });
-};
-
-export const updateUserStatus = (id, status) => {
+export const updateUserStatus = (id, accountStatus) => {
   return request({
     url: `/users/${id}/status`,
-    method: 'patch',
-    data: { status },
-  });
-};
-
-export const getUserStats = (params) => {
-  return request({
-    url: '/users/stats',
-    method: 'get',
-    params,
+    method: 'put',
+    params: { accountStatus },
   });
 };

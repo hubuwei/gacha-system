@@ -14,7 +14,7 @@ const Banners = () => {
   const fetchBanners = async () => {
     try {
       setLoading(true);
-      const response = await request.get('/cms/banners');
+      const response = await request.get('/banners');
       if (response.code === 200) {
         setBanners(response.data || []);
       }
@@ -57,7 +57,7 @@ const Banners = () => {
       
       if (editingBanner) {
         // 编辑
-        const response = await request.put(`/cms/banners/${editingBanner.id}`, values);
+        const response = await request.put(`/banners/${editingBanner.id}`, values);
         if (response.code === 200) {
           message.success('更新成功');
           setModalVisible(false);
@@ -65,7 +65,7 @@ const Banners = () => {
         }
       } else {
         // 新增
-        const response = await request.post('/cms/banners', values);
+        const response = await request.post('/banners', values);
         if (response.code === 200) {
           message.success('创建成功');
           setModalVisible(false);
@@ -84,7 +84,7 @@ const Banners = () => {
       content: '确定要删除这个Banner吗？',
       onOk: async () => {
         try {
-          const response = await request.delete(`/cms/banners/${id}`);
+          const response = await request.delete(`/banners/${id}`);
           if (response.code === 200) {
             message.success('删除成功');
             fetchBanners();
@@ -99,7 +99,7 @@ const Banners = () => {
   // 切换状态
   const handleToggleStatus = async (id, currentStatus) => {
     try {
-      const response = await request.put(`/cms/banners/${id}/status`, {
+      const response = await request.put(`/banners/${id}/status`, {
         isActive: !currentStatus,
       });
       if (response.code === 200) {

@@ -37,33 +37,3 @@ export const deleteAnnouncement = (id) => {
     method: 'delete',
   });
 };
-
-export const getBanners = () => {
-  return request({
-    url: '/banners',
-    method: 'get',
-  });
-};
-
-export const createBanner = (data) => {
-  return request({
-    url: '/banners',
-    method: 'post',
-    data,
-  });
-};
-
-export const updateBanner = (id, data) => {
-  return request({
-    url: `/banners/${id}`,
-    method: 'put',
-    data,
-  });
-};
-
-export const deleteBanner = (id) => {
-  return request({
-    url: `/banners/${id}`,
-    method: 'delete',
-  });
-};

@@ -38,28 +38,10 @@ export const deleteGame = (id) => {
   });
 };
 
-export const updateGameStatus = (id, status) => {
+export const updateGameStatus = (id, isPublished) => {
   return request({
     url: `/games/${id}/status`,
-    method: 'patch',
-    data: { status },
-  });
-};
-
-export const uploadGameImages = (gameId, formData) => {
-  return request({
-    url: `/games/${gameId}/images`,
-    method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-};
-
-export const getGameImages = (gameId) => {
-  return request({
-    url: `/games/${gameId}/images`,
-    method: 'get',
+    method: 'put',
+    params: { isPublished },
   });
 };

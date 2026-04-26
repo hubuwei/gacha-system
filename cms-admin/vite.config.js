@@ -10,4 +10,7 @@ export default defineConfig({
     open: false,  // 不自动打开浏览器
     historyApiFallback: true,  // SPA路由fallback
   },
+  define: {
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify('/api/cms')
+  }
 })

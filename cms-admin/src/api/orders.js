@@ -15,18 +15,10 @@ export const getOrderById = (id) => {
   });
 };
 
-export const updateOrderStatus = (id, status) => {
+export const updateOrderStatus = (id, orderStatus) => {
   return request({
     url: `/orders/${id}/status`,
-    method: 'patch',
-    data: { status },
-  });
-};
-
-export const getOrdersStats = (params) => {
-  return request({
-    url: '/orders/stats',
-    method: 'get',
-    params,
+    method: 'put',
+    params: { orderStatus },
   });
 };

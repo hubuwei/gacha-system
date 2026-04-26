@@ -9,15 +9,7 @@ export const getDashboardStats = () => {
 
 export const getRevenueStats = (params) => {
   return request({
-    url: '/dashboard/revenue',
-    method: 'get',
-    params,
-  });
-};
-
-export const getUserGrowthStats = (params) => {
-  return request({
-    url: '/dashboard/user-growth',
+    url: '/dashboard/weekly-revenue',
     method: 'get',
     params,
   });
@@ -25,7 +17,7 @@ export const getUserGrowthStats = (params) => {
 
 export const getTopGames = (limit = 10) => {
   return request({
-    url: '/dashboard/top-games',
+    url: '/dashboard/popular-games',
     method: 'get',
     params: { limit },
   });
