@@ -149,6 +149,12 @@
             <version>0.2.17</version>
         </dependency>
         
+        <!-- Spring Boot Actuator 监控 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        
         <!-- 支付宝 SDK（暂时注释，需要时再添加） -->
         <!-- <dependency>
             <groupId>com.alipay.sdk</groupId>

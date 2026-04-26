@@ -84,8 +84,11 @@ wechat:
     mock-enabled: true
 
 logging:
-  level:
-    com.cheng.mall: info
-    com.cheng.common: info
-    org.springframework.web: info
-    org.hibernate.SQL: warn
+  config: classpath:logback-spring.xml
+
+# Spring Boot Actuator 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,httptrace,loggers,beans
