@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gacha-system 架构图 / 时序图 / 状态机图</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px 20px; }
+  h1 { text-align: center; font-size: 2rem; margin-bottom: 8px; color: #58a6ff; }
+  .subtitle { text-align: center; color: #8b949e; margin-bottom: 40px; }
+  .section { max-width: 1200px; margin: 0 auto 60px; }
+  .section h2 { font-size: 1.4rem; color: #f0883e; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #f0883e; }
+  .mermaid { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 30px 20px; overflow-x: auto; }
+  .mermaid svg { max-width: 100%; }
+</style>
+</head>
+<body>
+
+<h1>🎮 gacha-system 项目架构文档</h1>
+<p class="subtitle">游戏商城 · 抽卡系统 · AI 客服 — 架构图 / 时序图 / 状态机图</p>
+
+<!-- ==================== 架构图 ==================== -->
+<div class="section">
+  <h2>一、系统架构图 (C4 Container)</h2>
+  <div class="mermaid">
+graph TB
+    subgraph 用户端["🖥 用户端"]
+        Browser["浏览器 React SPA<br/>localhost:5173"]
+        App["Codex Desktop App<br/>内嵌浏览器"]
+    end
+
+    subgraph 网关层["🔀 网关层"]
+        Nginx["Nginx 反向代理<br/>生产环境"]
+        ViteProxy["Vite Proxy<br/>开发环境"]
+    end
+
+    subgraph 核心服务["⚙ 微服务层 (Spring Boot)"]
+        Auth["auth-service :8084<br/>认证 · 用户管理 · JWT"]
+        Mall["mall-service :8081<br/>游戏商城 · 订单 · 钱包 · AI"]
+        Game["game-service :8082<br/>抽卡/扭蛋 · 签到 · 秒杀 · 兑换"]
+        CMS["cms-service :8085<br/>管理后台 · 看板 · 公告 · 审核"]
+    end
+
+    subgraph 中间件["🗄 基础设施"]
+        MySQL["MySQL 8.0 :3306<br/>gacha_system_dev"]
+        Redis["Redis 6 :6379<br/>缓存 · 秒杀 · Session"]
+        RabbitMQ["RabbitMQ :5672<br/>消息队列 · 订单超时"]
+        ES["Elasticsearch<br/>游戏搜索"]
+    end
+
+    subgraph 外部服务["☁ 外部服务"]
+        DeepSeek["DeepSeek API<br/>AI 聊天 / 游戏介绍生成"]
+        WechatPay["微信支付<br/>模拟模式"]
+    end
+
+    Browser --> ViteProxy
+    App --> ViteProxy
+    ViteProxy -->|"/api/auth/*"| Auth
+    ViteProxy -->|"/api/*"| Mall
+    Nginx --> Auth
+    Nginx --> Mall
+    Nginx --> Game
+    Nginx --> CMS
+
+    Auth --> MySQL
+    Auth --> Redis
+    Mall --> MySQL
+    Mall --> Redis
+    Mall --> RabbitMQ
+    Mall --> ES
+    Mall --> DeepSeek
+    Mall --> WechatPay
+    Game --> MySQL
+    Game --> Redis
+    CMS --> MySQL
+  </div>
+</div>
+
+<!-- ==================== 时序图 1：用户购买流程 ==================== -->
+<div class="section">
+  <h2>二、时序图 — 用户浏览·下单·支付</h2>
+  <div class="mermaid">
+sequenceDiagram
+    actor User as 👤 用户
+    participant Web as React 前端
+    participant Nginx as Nginx/Vite Proxy
+    participant Auth as Auth Service :8084
+    participant Mall as Mall Service :8081
+    participant DB as MySQL
+    participant Pay as 微信支付
+
+    User->>Web: 打开商城首页
+    Web->>Nginx: GET /api/games?page=0&size=20
+    Nginx->>Mall: 转发请求
+    Mall->>DB: SELECT * FROM games
+    DB-->>Mall: 游戏列表
+    Mall-->>Web: {code:200, data:{content:[...]}}
+
+    User->>Web: 点击登录
+    Web->>Nginx: POST /api/auth/login
+    Nginx->>Auth: {username, password}
+    Auth->>DB: 验证用户
+    DB-->>Auth: 用户信息
+    Auth-->>Web: {token, user}
+
+    User->>Web: 点击游戏详情
+    Web->>Nginx: GET /api/games/:id
+    Nginx->>Mall: 查询游戏详情
+    Mall->>DB: SELECT game + reviews
+    DB-->>Mall: 详情数据
+    Mall-->>Web: {game, reviews}
+
+    User->>Web: 加入购物车 → 下单
+    Web->>Nginx: POST /api/orders
+    Nginx->>Mall: {gameId, quantity}
+    Mall->>DB: INSERT orders (status=pending)
+    DB-->>Mall: 订单创建
+    Mall-->>Web: {orderId, totalPrice}
+
+    User->>Web: 选择支付
+    Web->>Nginx: POST /api/wallet/pay 或 /api/pay
+    Nginx->>Mall: 支付请求
+    Mall->>Pay: 调起支付
+    Pay-->>Mall: 支付结果
+    Mall->>DB: UPDATE orders (status=paid)
+    Mall->>DB: UPDATE wallet (扣款)
+    Mall-->>Web: {code:200, 支付成功}
+    Web-->>User: 🎉 购买成功！游戏已入库
+  </div>
+</div>
+
+<!-- ==================== 时序图 2：AI 客服流程 ==================== -->
+<div class="section">
+  <h2>三、时序图 — AI 客服对话（含打折查询）</h2>
+  <div class="mermaid">
+sequenceDiagram
+    actor User as 👤 用户
+    participant Web as React AI客服组件
+    participant Proxy as Vite Proxy
+    participant Mall as Mall Service :8081
+    participant DB as MySQL
+    participant AI as DeepSeek API
+
+    User->>Web: 点击 🤖 打开客服
+    Web-->>User: 显示聊天面板 + 快捷提问
+
+    alt 普通问题（如"怎么退款？"）
+        User->>Web: 输入"怎么退款？"
+        Web->>Proxy: POST /api/ai/chat {message, history}
+        Proxy->>Mall: 转发
+        Mall->>Mall: buildDiscountContext() → 无关键字 → 返回 null
+        Mall->>AI: POST /v1/chat/completions (system + history + user)
+        AI-->>Mall: AI 自由回复
+        Mall-->>Web: {code:200, data:{reply:"7天内可退款..."}}
+        Web-->>User: 显示 AI 回复
+    end
+
+    alt 打折查询（如"有什么打折游戏？"）
+        User->>Web: 输入"今天有什么打折游戏？"
+        Web->>Proxy: POST /api/ai/chat
+        Proxy->>Mall: 转发
+        Mall->>Mall: buildDiscountContext() → 检测到关键字"打折"
+        Mall->>DB: findAllDiscountedGames()
+        DB-->>Mall: 29款打折游戏 → 取 Top10
+        Mall->>Mall: 格式化游戏数据注入 user message
+        Mall->>AI: POST /v1/chat/completions (system + history + user + 折扣数据)
+        AI-->>Mall: AI 基于真实数据生成推荐回复
+        Mall-->>Web: {code:200, data:{reply:"🎉 10款打折：黑神话¥149..."}}
+        Web-->>User: 显示带真实游戏数据的回复
+    end
+
+    alt 游戏介绍生成
+        User->>Web: 打开 AI 写介绍页面
+        Web->>Proxy: POST /api/ai/generate-game-intro {gameName, genre, style}
+        Proxy->>Mall: 转发
+        Mall->>AI: 发送结构化 prompt（JSON 格式要求）
+        AI-->>Mall: {title, summary, background, gameplay, highlights, recommendation}
+        Mall-->>Web: {code:200, data:{...6段介绍}}
+        Web-->>User: 分板块展示 + 一键复制
+    end
+  </div>
+</div>
+
+<!-- ==================== 时序图 3：抽卡流程 ==================== -->
+<div class="section">
+  <h2>四、时序图 — 抽卡/扭蛋流程</h2>
+  <div class="mermaid">
+sequenceDiagram
+    actor User as 👤 用户
+    participant Web as 前端
+    participant Game as Game Service :8082
+    participant DB as MySQL
+    participant Redis as Redis
+
+    User->>Web: 进入抽卡页面
+    Web->>Game: GET /api/gacha/config
+    Game->>DB: 查询卡池配置
+    DB-->>Game: 卡池概率、奖池
+    Game-->>Web: {pools, rates}
+
+    User->>Web: 点击"单抽"
+    Web->>Game: POST /api/gacha/draw {poolId, count:1}
+    Game->>Game: 扣减用户代币/积分
+    Game->>Game: 按概率随机抽取
+    Game->>DB: INSERT gacha_records
+    DB-->>Game: 记录保存
+    Game-->>Web: {rarity, item, animation}
+    Web-->>User: 🎆 抽卡动画 + 结果展示
+
+    User->>Web: 点击"十连抽"
+    Web->>Game: POST /api/gacha/draw {poolId, count:10}
+    Game->>Redis: 分布式锁(防并发)
+    Game->>Game: 10次按概率抽取
+    Game->>DB: INSERT 10条 gacha_records
+    Game->>Redis: 释放锁
+    Game-->>Web: [{10条结果}]
+    Web-->>User: 🌟 十连结果展示（保底SR）
+  </div>
+</div>
+
+<!-- ==================== 状态机图：订单生命周期 ==================== -->
+<div class="section">
+  <h2>五、状态机图 — 订单生命周期</h2>
+  <div class="mermaid">
+stateDiagram-v2
+    [*] --> 待支付: 用户创建订单
+    待支付 --> 已支付: 支付成功
+    待支付 --> 已取消: 超时未付 / 用户取消
+    已支付 --> 已完成: 游戏入库 · 自动确认
+    已支付 --> 退款中: 用户申请退款
+    退款中 --> 已退款: 审核通过 · 原路退款
+    退款中 --> 已支付: 审核拒绝
+    已退款 --> [*]
+    已完成 --> [*]
+    已取消 --> [*]
+
+    note right of 待支付
+        payment_status: pending
+        order_status: pending
+        15分钟超时自动取消
+    end note
+    note right of 已支付
+        payment_status: paid
+        order_status: paid
+        游戏自动加入用户游戏库
+    end note
+  </div>
+</div>
+
+<!-- ==================== 状态机图：用户会话 ==================== -->
+<div class="section">
+  <h2>六、状态机图 — 游戏商城核心实体状态</h2>
+  <div class="mermaid">
+stateDiagram-v2
+    state "🛒 购物车" as Cart {
+        [*] --> 浏览中: 浏览游戏
+        浏览中 --> 已加购: 加入购物车
+        已加购 --> 浏览中: 继续浏览
+        已加购 --> 已下单: 结算
+        已下单 --> [*]
+    }
+
+    state "💰 钱包" as Wallet {
+        余额不足 --> 余额充足: 充值
+        余额充足 --> 余额不足: 消费
+        余额充足 --> 冻结中: 发起支付
+        冻结中 --> 余额不足: 支付完成(扣款)
+        冻结中 --> 余额充足: 支付失败(退回)
+    }
+
+    state "🤖 AI 客服" as AIChat {
+        [*] --> 空闲: 未打开
+        空闲 --> 对话中: 点击🤖打开
+        对话中 --> 查询DB: 含打折关键字
+        查询DB --> 回复中: 注入数据调AI
+        对话中 --> 回复中: 普通问题调AI
+        回复中 --> 对话中: 显示回复
+        对话中 --> 空闲: 关闭面板
+    }
+  </div>
+</div>
+
+<script>
+mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' });
+</script>
+</body>
+</html>
