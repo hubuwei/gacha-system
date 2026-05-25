@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, useParams, useNavigate } from 'react-router-dom'
 import App from './App'
 import OrderCheckout from './components/OrderCheckout'
@@ -11,6 +11,7 @@ import GameLibrary from './components/GameLibrary'
 import GameDetail from './components/GameDetail'
 import NotificationCenter from './components/NotificationCenter'
 import FriendSystem from './components/FriendSystem'
+import AIGameIntro from './components/AIGameIntro'
 import { AUTH_API_BASE, MALL_API_BASE } from './App'
 
 // 游戏详情包装组件
@@ -179,6 +180,7 @@ function AppWrapper() {
         
         {/* 好友系统 */}
         <Route path="/friends" element={<FriendSystem />} />
+        <Route path="/ai-game-intro" element={<AIGameIntro />} />
       </Routes>
     </Router>
   )

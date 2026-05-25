@@ -6,6 +6,7 @@ import bgImage from './assets/Jason_and_Lucia_02_landscape.jpg'
 import GameDetail from './components/GameDetail'
 import CartSidebar from './components/CartSidebar'
 import WishlistSidebar from './components/WishlistSidebar'
+import AICustomerService from './components/AICustomerService'
 import { NotificationContainer, useNotification } from './components/Notification'
 import ConfirmDialog from './components/ConfirmDialog'
 
@@ -1197,6 +1198,7 @@ function App({ onUserLogin, onUserLogout }) {
                 <button className="nav-link-btn" onClick={() => navigate('/orders')}>
                   📦 订单
                 </button>
+                <button className="nav-link-btn" onClick={() => navigate('/ai-game-intro')}>🤖 AI写介绍</button>
                 {/* 通知铃铛 */}
                 <div 
                   className="notification-bell-wrapper"
@@ -1948,8 +1950,10 @@ function App({ onUserLogin, onUserLogout }) {
         onClose={() => setShowWishlist(false)}
         currentUser={currentUser}
       />
-    </div>
-  )
+      {/* AI 客服 */}
+      <AICustomerService />
+</div>
+)
 }
 
 export default App

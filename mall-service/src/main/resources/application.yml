@@ -102,3 +102,8 @@ management:
         enabled: true
     tags:
       application: ${spring.application.name}
+# ========================== AI / OpenAI 兼容接口 ==========================
+openai:
+  api-key: sk-0197bda8e1ae40fe955cfa56ac55a03f
+  base-url: https://api.deepseek.com
+  model: deepseek-chat
