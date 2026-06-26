@@ -183,9 +183,9 @@ services:
     environment:
       - DB_HOST=gacha-mysql
       - DB_PORT=3306
-      - DB_NAME=${DB_NAME:gacha_system_prod}
-      - DB_USERNAME=${DB_USERNAME:root}
-      - DB_PASSWORD=${DB_PASSWORD:Xc037417!}
+      - DB_NAME=${DB_NAME:-gacha_system_prod}
+      - DB_USERNAME=${DB_USERNAME:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-Xc037417!}
 
   nginx:
     image: nginx:latest
