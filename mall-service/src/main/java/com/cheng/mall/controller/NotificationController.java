@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
  * 通知控制器
  */
 @RestController
-@RequestMapping("/api/notification")
+@RequestMapping("/api/notifications")
 @RequiredArgsConstructor
 public class NotificationController {
     
@@ -20,13 +20,13 @@ public class NotificationController {
     /**
      * 获取用户的通知列表（分页）
      */
-    @GetMapping("/list")
+    @GetMapping("")
     public CommonResponse<Page<UserNotification>> getNotifications(
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam Long userId,
+            @RequestParam(defaultValue = "false") boolean unreadOnly,
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        // TODO: 从JWT Token获取当前用户ID
-        Long uid = 1L;
-        Page<UserNotification> notifications = notificationService.getNotifications(uid, page, size);
+        Page<UserNotification> notifications = notificationService.getNotifications(userId, page, size);
         return CommonResponse.success(notifications);
     }
     
@@ -34,10 +34,8 @@ public class NotificationController {
      * 获取未读通知数量
      */
     @GetMapping("/unread-count")
-    public CommonResponse<Long> getUnreadCount() {
-        // TODO: 从JWT Token获取当前用户ID
-        Long uid = 1L;
-        long count = notificationService.getUnreadCount(uid);
+    public CommonResponse<Long> getUnreadCount(@RequestParam Long userId) {
+        long count = notificationService.getUnreadCount(userId);
         return CommonResponse.success(count);
     }
     
@@ -53,11 +51,18 @@ public class NotificationController {
     /**
      * 标记所有通知为已读
      */
-    @PostMapping("/read-all")
-    public CommonResponse<Void> markAllAsRead() {
-        // TODO: 从JWT Token获取当前用户ID
-        Long uid = 1L;
-        notificationService.markAllAsRead(uid);
+    @PostMapping("/mark-all-read")
+    public CommonResponse<Void> markAllAsRead(@RequestParam Long userId) {
+        notificationService.markAllAsRead(userId);
+        return CommonResponse.success(null);
+    }
+    
+    /**
+     * 删除通知
+     */
+    @DeleteMapping("/{id}")
+    public CommonResponse<Void> deleteNotification(@PathVariable Long id) {
+        notificationService.deleteNotification(id);
         return CommonResponse.success(null);
     }
 }

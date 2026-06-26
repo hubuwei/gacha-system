@@ -160,7 +160,7 @@ public class NotificationService {
     public Page<UserNotification> getNotifications(Long uid, int page, int size) {
         return notificationRepository.findByUidOrderByCreatedAtDesc(
             uid, 
-            PageRequest.of(page - 1, size)
+            PageRequest.of(page, size)
         );
     }
     
@@ -191,6 +191,15 @@ public class NotificationService {
             notificationRepository.save(notification);
         });
         log.info("用户 {} 的所有通知已标记为已读，共 {} 条", uid, unreadNotifications.size());
+    }
+    
+    /**
+     * 删除通知
+     */
+    @Transactional
+    public void deleteNotification(Long notificationId) {
+        notificationRepository.deleteById(notificationId);
+        log.info("通知 {} 已删除", notificationId);
     }
     
     /**
