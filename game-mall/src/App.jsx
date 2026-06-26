@@ -1256,7 +1256,7 @@ function App({ onUserLogin, onUserLogout }) {
                             </div>
                             <div className="notification-content">
                               <div className="notification-title">{notification.title}</div>
-                              <div className="notification-message">{notification.message}</div>
+                              <div className="notification-message">{notification.content}</div>
                               <div className="notification-time">
                                 {new Date(notification.createdAt).toLocaleString('zh-CN', {
                                   month: '2-digit',

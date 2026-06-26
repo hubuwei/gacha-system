@@ -81,6 +81,8 @@ services:
         condition: service_started
     networks:
       - gacha-net
+    volumes:
+      - ./uploads:/app/uploads
     env_file:
       - .env.prod
     environment:

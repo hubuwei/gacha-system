@@ -392,18 +392,19 @@ public class AuthController {
 
             String scheme = request.getScheme();
             String serverName = request.getServerName();
-            int serverPort = request.getServerPort();
-            String contextPath = request.getContextPath();
-
-            String baseUrl = scheme + "://" + serverName;
-            if ((scheme.equals("http") && serverPort != 80) || (scheme.equals("https") && serverPort != 443)) {
-                baseUrl += ":" + serverPort;
-            }
-
-            String avatarUrl = baseUrl + contextPath + "/uploads/avatars/" + filename;
-
+            String hostHeader = request.getHeader("Host");
+            
+            String avatarUrl;
+            
             if (serverName.equals("gacha-auth-service")) {
-                avatarUrl = "http://" + request.getHeader("Host") + contextPath + "/uploads/avatars/" + filename;
+                avatarUrl = "http://" + hostHeader + "/uploads/avatars/" + filename;
+            } else {
+                int serverPort = request.getServerPort();
+                String baseUrl = scheme + "://" + serverName;
+                if ((scheme.equals("http") && serverPort != 80) || (scheme.equals("https") && serverPort != 443)) {
+                    baseUrl += ":" + serverPort;
+                }
+                avatarUrl = baseUrl + "/uploads/avatars/" + filename;
             }
 
             User user = userRepository.findById(userId)
