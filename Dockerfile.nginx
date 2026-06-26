@@ -1,19 +1,11 @@
 FROM nginx:latest
 
 LABEL maintainer="gacha-system"
-LABEL description="Nginx with dynamic DNS resolution for gacha-system"
+LABEL description="Nginx for gacha-system"
 
-# 复制前端构建文件
-COPY nginx-dist/ /usr/share/nginx/html/
-
-# 复制自定义 Nginx 配置
 COPY nginx-config.conf /etc/nginx/conf.d/default.conf
 
-# 注意：不在构建时验证配置，因为上游服务在运行时才可用
+EXPOSE 80 443
 
-# 暴露端口
-EXPOSE 80
-
-# 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
   CMD curl -f http://localhost/ || exit 1

@@ -1,56 +1,36 @@
 #!/bin/bash
 
-# 生产环境一键部署脚本
 echo "=== Gacha System 生产环境部署 ==="
 
-# 备份配置
-echo "1. 备份配置文件..."
-cp .env.prod .env.prod.bak
-
-# 拉取最新代码
-echo "2. 拉取最新代码..."
+echo "1. 拉取最新代码..."
+cd /opt/gacha-system
 git pull origin master
 
-# 停止现有服务
-echo "3. 停止现有服务..."
-docker-compose -f docker-compose.prod.yml down
+echo "2. 停止现有服务..."
+docker compose stop auth-service game-service mall-service cms-service nginx
 
-# 清理旧文件
-echo "4. 清理旧文件..."
-rm -rf game-mall/dist cms-admin/dist
+echo "3. 删除旧容器..."
+docker compose rm -f auth-service game-service mall-service cms-service nginx
 
-# 构建前端
-echo "5. 构建前端..."
-cd game-mall
-npm install && npm run build
-cd ../cms-admin
-npm install && npm run build
-cd ..
+echo "4. 构建后端服务..."
+docker compose build auth-service game-service mall-service cms-service
 
-# 构建后端
-echo "6. 构建后端..."
-mvn clean package -Pprod -DskipTests
+echo "5. 启动服务..."
+docker compose up -d auth-service game-service mall-service cms-service nginx
 
-# 启动服务
-echo "7. 启动服务..."
-docker-compose -f docker-compose.prod.yml up -d
+echo "6. 等待服务启动..."
+sleep 45
 
-# 等待服务启动
-echo "8. 等待服务启动..."
-sleep 60
+echo "7. 查看服务状态..."
+docker compose ps
 
-# 验证服务
-echo "9. 验证服务状态..."
-docker-compose -f docker-compose.prod.yml ps
+echo "8. 健康检查..."
+curl -s http://localhost:8081/api/actuator/health || echo "mall-service 健康检查失败"
+curl -s http://localhost:8084/api/auth/health || echo "auth-service 健康检查失败"
 
-# 测试 API
-echo "10. 测试 API 接口..."
-curl -s https://your-domain.com/api/actuator/health
-curl -s https://your-domain.com/api/games/all-with-tags | head -50
-
-# 同步游戏数据
-echo "11. 同步游戏数据..."
-curl -X POST https://your-domain.com/api/sync/games
+echo "9. 同步游戏数据到ES..."
+curl -X POST http://localhost:8081/api/sync/games || echo "ES同步失败，请手动执行"
 
 echo "=== 部署完成 ==="
-echo "生产环境地址: https://your-domain.com"
+echo "前端地址: http://111.228.12.167"
+echo "管理后台: http://111.228.12.167/admin"

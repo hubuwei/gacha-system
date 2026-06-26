@@ -1,4 +1,4 @@
-name: 部署Steam项目
+name: 部署Gacha系统
 
 on:
   push:
@@ -18,8 +18,28 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build with Maven
-        run: mvn clean package -Pprod -Dmaven.test.skip=true
+      - name: Build backend with Maven
+        run: mvn clean package -Dmaven.test.skip=true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Build game-mall frontend
+        working-directory: game-mall
+        run: npm install && npm run build
+
+      - name: Build cms-admin frontend
+        working-directory: cms-admin
+        run: npm install && npm run build
+
+      - name: Prepare frontend distribution
+        run: |
+          mkdir -p nginx-dist/admin
+          cp -r game-mall/dist/* nginx-dist/
+          cp -r cms-admin/dist/* nginx-dist/admin/
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
@@ -29,11 +49,20 @@ jobs:
           key: ${{ secrets.SERVER_PRIVATE_KEY }}
           script: |
             cd /opt/gacha-system
-            git pull
-            # 重新构建和启动所有服务（包括ES）
-            docker compose up -d --build
-            echo "✅ 后端和中间件已更新！"
-            # 等待服务启动
-            sleep 15
-            # 同步游戏数据到ES
-            curl -X POST http://localhost:8081/api/sync/games || echo "ES同步失败，请手动执行"
+            git pull origin master
+
+            docker compose stop auth-service game-service mall-service cms-service nginx
+            docker compose rm -f auth-service game-service mall-service cms-service nginx
+
+            docker compose build auth-service game-service mall-service cms-service
+            docker compose up -d auth-service game-service mall-service cms-service nginx
+
+            echo "✅ 后端服务已更新！"
+            sleep 30
+
+            docker compose ps
+
+            curl -s http://localhost:8081/api/actuator/health || echo "mall-service健康检查失败"
+            curl -s http://localhost:8084/api/auth/health || echo "auth-service健康检查失败"
+            echo ""
+            echo "✅ 部署完成！"
