@@ -5,7 +5,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
+})
 @EntityScan(basePackages = {"com.cheng.common.entity", "com.cheng.cms.entity"})
 @EnableJpaRepositories(basePackages = {"com.cheng.common.repository", "com.cheng.cms.repository"})
 public class CmsServiceApplication {
