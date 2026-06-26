@@ -1,5 +1,5 @@
 server:
-  port: ${CMS_PORT:8085}
+  port: ${APP_PORT:8085}
 
 spring:
   application:
@@ -15,7 +15,7 @@ spring:
     show-sql: ${JPA_SHOW_SQL:true}
     properties:
       hibernate:
-        dialect: ${JPA_DIALECT:org.hibernate.dialect.MySQLDialect}
+        dialect: ${JPA_DIALECT:org.hibernate.dialect.MySQL8Dialect}
         default_storage_engine: innodb
   servlet:
     multipart:

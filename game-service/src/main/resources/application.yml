@@ -12,7 +12,7 @@ spring:
     show-sql: ${JPA_SHOW_SQL:true}
     properties:
       hibernate:
-        dialect: ${JPA_DIALECT:org.hibernate.dialect.MySQL5InnoDBDialect}
+        dialect: ${JPA_DIALECT:org.hibernate.dialect.MySQL8Dialect}
   redis:
     host: ${REDIS_HOST:111.228.12.167}
     port: ${REDIS_PORT:6379}
