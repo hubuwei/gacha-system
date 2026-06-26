@@ -49,6 +49,23 @@ spring:
         max-idle: 10
         min-idle: 5
   
+  # 邮件配置
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: 1712133303@qq.com
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+  
   # RabbitMQ 配置
   rabbitmq:
     host: gacha-rabbitmq
