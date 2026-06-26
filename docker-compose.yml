@@ -167,6 +167,7 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=${RABBITMQ_USERNAME:-admin}
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-Xc037417!}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
 
   cms-service:
     build:
