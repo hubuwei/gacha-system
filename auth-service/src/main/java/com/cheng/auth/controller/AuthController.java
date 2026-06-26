@@ -402,6 +402,10 @@ public class AuthController {
 
             String avatarUrl = baseUrl + contextPath + "/uploads/avatars/" + filename;
 
+            if (serverName.equals("gacha-auth-service")) {
+                avatarUrl = "http://" + request.getHeader("Host") + contextPath + "/uploads/avatars/" + filename;
+            }
+
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("用户不存在"));
             user.setAvatarUrl(avatarUrl);

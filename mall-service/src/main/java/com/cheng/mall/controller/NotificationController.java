@@ -7,6 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * 通知控制器
  */
@@ -21,13 +24,19 @@ public class NotificationController {
      * 获取用户的通知列表（分页）
      */
     @GetMapping("")
-    public CommonResponse<Page<UserNotification>> getNotifications(
+    public CommonResponse<Map<String, Object>> getNotifications(
             @RequestParam Long userId,
             @RequestParam(defaultValue = "false") boolean unreadOnly,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Page<UserNotification> notifications = notificationService.getNotifications(userId, page, size);
-        return CommonResponse.success(notifications);
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("list", notifications.getContent());
+        result.put("total", notifications.getTotalElements());
+        result.put("unreadCount", notificationService.getUnreadCount(userId));
+        
+        return CommonResponse.success(result);
     }
     
     /**
