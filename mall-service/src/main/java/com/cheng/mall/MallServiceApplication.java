@@ -24,9 +24,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         "com.cheng.mall.repository",
         "com.cheng.common.repository"
 })
-// @EnableElasticsearchRepositories(basePackages = {
-//         "com.cheng.mall.es.repository"
-// })  // 本地开发时禁用ES，使用服务器ES时取消注释
+@EnableElasticsearchRepositories(basePackages = {
+        "com.cheng.mall.es.repository"
+})
 @EnableCaching
 @EnableAsync
 @EnableScheduling

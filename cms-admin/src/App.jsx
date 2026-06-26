@@ -22,7 +22,7 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <BrowserRouter basename="/cms">
+    <BrowserRouter basename="/admin">
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
